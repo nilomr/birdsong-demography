@@ -6,65 +6,19 @@ box::use(R / io[read_csv_file])
 # READ IN THE DATA ───────────────────────────────────────────────────────── #
 
 # Load feature vector data
-songfeats <- read_csv_file(
-    file.path(config$path$data, "feature_vectors.csv")
-)
-# Load metadata
-songmeta <- read_csv_file(
-    file.path(config$path$data, "great-tit-hits.csv")
+labels <- read_csv_file(
+    file.path(config$path$derived_data, "manual_labels.csv")
 )
 
-# add the class_id column from songmeta as the first column of songfeats:
-songfeats <- dplyr::bind_cols(songmeta |> dplyr::select(class_id), songfeats)
+labels <- labels |>
+    tidyr::extract(class_id, into = "pnum", regex = "^(\\w+)_", remove = FALSE)
 
-# remove all rows where class_id contains SW115 (broken bird) and
-# 20221MP32 (no bird info)
-songfeats <- songfeats |>
-    dplyr::filter(!grepl("20211O115|20221MP32", class_id))
-songmeta <- songmeta |>
-    dplyr::filter(!grepl("20211O115|20221MP32", class_id))
-
-
-# CLUSTER SONGS ──────────────────────────────────────────────────────────── #
-
-deepsplit <- .5
-
-# Find median feature vector for each label
-songfeats_median <- songfeats |>
-    dplyr::group_by(class_id) |>
-    dplyr::summarize(dplyr::across(-1, median))
-
-# Perform hierarchical clustering & cut the dendrogram dynamically
-dist_matrix <- dist(songfeats_median[-1])
-hclust_result <- hclust(dist_matrix, method = "average")
-clusters <- dynamicTreeCut::cutreeHybrid(
-    hclust_result, as.matrix(dist_matrix),
-    minClusterSize = 1,
-    deepSplit = deepsplit,
-    respectSmallClusters = TRUE
-)
-
-cluster_assignment <- dplyr::tibble(
-    labels = clusters$labels, class_id = songfeats_median$class_id
-)
-
-# find n uniqye labels in cluster_assignment
-print(paste("Number of unique labels:", max(cluster_assignment$labels)))
-
-# Separate class_id into pnum and song_id
-cluster_assignment <- cluster_assignment |>
-    dplyr::mutate(pnum = stringr::str_split(
-        class_id, "_",
-        simplify = TRUE
-    )[, 1]) |>
-    # labvels as factor
-    dplyr::mutate(labels = as.factor(labels))
 
 # group by pnum and calculate how many labels are shared by each pair of pnums
-pnumlabs <- cluster_assignment |>
+pnumlabs <- labels |>
     # summarise so that each pnum has a list of labels
     dplyr::group_by(pnum) |>
-    dplyr::summarise(labels = toString(labels))
+    dplyr::summarise(class_label = toString(class_label))
 
 # now create a long format table with all combinations of pnums
 pnumlabs <- pnumlabs |>
@@ -74,24 +28,22 @@ pnumlabs <- pnumlabs |>
     dplyr::filter(pnum != pnum2) |>
     # add labels for each pnum
     dplyr::left_join(pnumlabs, by = c("pnum" = "pnum")) |>
-    dplyr::rename(labels1 = labels) |>
+    dplyr::rename(labels1 = class_label) |>
     dplyr::left_join(pnumlabs, by = c("pnum2" = "pnum")) |>
-    dplyr::rename(labels2 = labels)
-# remove combinations that are the same but in reverse order
-# dplyr::filter(pnum < pnum2)
+    dplyr::rename(labels2 = class_label)
+
 
 # and now calculate the number of total, combined total and shared
 # labels for each pair of pnums
 sharing_data <- pnumlabs |>
     dplyr::mutate(
-        total1 = stringr::str_count(labels1, ",") + 1,
-        total2 = stringr::str_count(labels2, ",") + 1,
-        shared = purrr::map2_dbl(labels1, labels2, function(x, y) {
-            length(intersect(
-                stringr::str_split(x, ",")[[1]],
-                stringr::str_split(y, ",")[[1]]
-            ))
-        })
+        labels1 = stringr::str_split(labels1, ", "),
+        labels2 = stringr::str_split(labels2, ", "),
+        total1 = purrr::map_int(labels1, ~ length(.x)),
+        total2 = purrr::map_int(labels2, ~ length(.x)),
+        shared = purrr::map2_int(
+            labels1, labels2, ~ length(intersect(.x, .y))
+        )
     ) |>
     dplyr::mutate(total = total1 + total2)
 
@@ -102,8 +54,16 @@ print(paste(
 ))
 
 
+
 # SAVE TO CSV ────────────────────────────────────────────────────────────── #
 
+
+# lists to string sso they can be saved as csv
+sharing_data <- sharing_data |>
+    dplyr::mutate(
+        labels1 = purrr::map_chr(labels1, ~ toString(.x)),
+        labels2 = purrr::map_chr(labels2, ~ toString(.x))
+    )
 readr::write_csv(sharing_data, file.path(
     config$path$derived_data,
     "song_sharing_data.csv"

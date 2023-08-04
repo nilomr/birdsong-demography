@@ -114,46 +114,46 @@ main_data |>
 # TODO: review - remove or integrate
 
 
-pop_contour |>
-    ggplot2::ggplot() +
-    ggplot2::geom_sf() +
-    ggplot2::coord_sf(crs = 27700) +
-    ggplot2::geom_point(
-        data = nestbox_data,
-        ggplot2::aes(x = x, y = y),
-        size = 0.5,
-        shape = 21,
-        fill = "black",
-        colour = "black"
-    ) +
-    theme_frame(text_size = 12)
+# pop_contour |>
+#     ggplot2::ggplot() +
+#     ggplot2::geom_sf() +
+#     ggplot2::coord_sf(crs = 27700) +
+#     ggplot2::geom_point(
+#         data = nestbox_data,
+#         ggplot2::aes(x = x, y = y),
+#         size = 0.5,
+#         shape = 21,
+#         fill = "black",
+#         colour = "black"
+#     ) +
+#     theme_frame(text_size = 12)
 
 
 
-sf_main_data <- main_data |>
-    dplyr::filter(year %in% c(2020)) |>
-    dplyr::filter(!is.na(x) & !is.na(y)) |>
-    sf::st_as_sf(coords = c("x", "y"), remove = F, crs = 27700)
+# sf_main_data <- main_data |>
+#     dplyr::filter(year %in% c(2020)) |>
+#     dplyr::filter(!is.na(x) & !is.na(y)) |>
+#     sf::st_as_sf(coords = c("x", "y"), remove = F, crs = 27700)
 
-territories <- sf::st_voronoi(sf::st_union(sf_main_data))
-territories <- sf::st_intersection(
-    sf::st_cast(territories),
-    sf::st_union(pop_contour)
-)
+# territories <- sf::st_voronoi(sf::st_union(sf_main_data))
+# territories <- sf::st_intersection(
+#     sf::st_cast(territories),
+#     sf::st_union(pop_contour)
+# )
 
-# Add info on territory size
-territories_area <- sf::st_sf(
-    territory_area = as.numeric(sf::st_area(territories)),
-    geom = territories
-)
-birds.ids <- sf_main_data[, c(1, 2, 3, 4)]
-territories_area <- sf::st_join(territories_area, sf_main_data)
+# # Add info on territory size
+# territories_area <- sf::st_sf(
+#     territory_area = as.numeric(sf::st_area(territories)),
+#     geom = territories
+# )
+# birds.ids <- sf_main_data[, c(1, 2, 3, 4)]
+# territories_area <- sf::st_join(territories_area, sf_main_data)
 
 
-# Find first order neighbors
-neighbors <- sf::st_touches(territories_area, territories_area)
+# # Find first order neighbors
+# neighbors <- sf::st_touches(territories_area, territories_area)
 
-# Add neighbors to territories_area
-territories_area$neighbors <- apply(neighbors, 1, function(x) {
-    paste(territories_area$pnum[x], collapse = ", ")
-})
+# # Add neighbors to territories_area
+# territories_area$neighbors <- apply(neighbors, 1, function(x) {
+#     paste(territories_area$pnum[x], collapse = ", ")
+# })
