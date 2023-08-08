@@ -32,6 +32,20 @@
       ],
       "Hash": "00077243042334c50b74cdfafe172870"
     },
+    "ClustGeo": {
+      "Package": "ClustGeo",
+      "Version": "2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "graphics",
+        "sp",
+        "spdep",
+        "stats"
+      ],
+      "Hash": "a4ce15afe61fc17e432f99000f17b28c"
+    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.1.3",
@@ -352,6 +366,18 @@
         "utils"
       ],
       "Hash": "9fe98599ca456d6552421db0d6772d8f"
+    },
+    "boot": {
+      "Package": "boot",
+      "Version": "1.3-28",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "graphics",
+        "stats"
+      ],
+      "Hash": "0baa960e3b49c6176a4f42addcbacc59"
     },
     "box": {
       "Package": "box",
@@ -729,6 +755,18 @@
         "utils"
       ],
       "Hash": "b78bb7a4b7f2762630eb3a75269e6005"
+    },
+    "deldir": {
+      "Package": "deldir",
+      "Version": "1.0-9",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics"
+      ],
+      "Hash": "81dc74aa2dbe87672a8f73934fcf2dae"
     },
     "desc": {
       "Package": "desc",
@@ -1463,24 +1501,6 @@
       ],
       "Hash": "266a20443ca13c65688b2116d5220f76"
     },
-    "jtools": {
-      "Package": "jtools",
-      "Version": "2.2.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "crayon",
-        "generics",
-        "ggplot2",
-        "magrittr",
-        "pander",
-        "pkgconfig",
-        "rlang",
-        "tibble"
-      ],
-      "Hash": "ba7507810d8784d3ebe67c8fe3906d99"
-    },
     "knitr": {
       "Package": "knitr",
       "Version": "1.43",
@@ -1791,24 +1811,6 @@
         "askpass"
       ],
       "Hash": "0f7cd2962e3044bb940cca4f4b5cecbe"
-    },
-    "pander": {
-      "Package": "pander",
-      "Version": "0.6.5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp",
-        "digest",
-        "grDevices",
-        "graphics",
-        "methods",
-        "stats",
-        "tools",
-        "utils"
-      ],
-      "Hash": "737924139a1e4fc96356ff377c754c35"
     },
     "parallelly": {
       "Package": "parallelly",
@@ -2536,6 +2538,57 @@
         "R"
       ],
       "Hash": "5f5a7629f956619d519205ec475fe647"
+    },
+    "sp": {
+      "Package": "sp",
+      "Version": "2.0-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "grid",
+        "lattice",
+        "methods",
+        "stats",
+        "utils"
+      ],
+      "Hash": "2551981e6f85d59c81652bf654d6c3ca"
+    },
+    "spData": {
+      "Package": "spData",
+      "Version": "2.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "sp"
+      ],
+      "Hash": "49704afce6839b2ac1c82c098feb7cc7"
+    },
+    "spdep": {
+      "Package": "spdep",
+      "Version": "1.2-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "boot",
+        "deldir",
+        "e1071",
+        "grDevices",
+        "graphics",
+        "methods",
+        "s2",
+        "sf",
+        "sp",
+        "spData",
+        "stats",
+        "units",
+        "utils"
+      ],
+      "Hash": "e155cf507897a25ea568ee451fb1cdc9"
     },
     "stringi": {
       "Package": "stringi",

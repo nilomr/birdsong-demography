@@ -65,7 +65,7 @@ titheme <- function() {
             size = 12, margin = ggplot2::margin(t = 0, r = 0, b = 0, l = 10)
         ),
         plot.subtitle = ggplot2::element_text(
-            margin = ggplot2::margin(t = 0, r = 0, b = 10, l = 0)
+            margin = ggplot2::margin(t = 0, r = 0, b = 5, l = 0)
         ),
         legend.background = ggplot2::element_rect(
             fill = "transparent", colour = NA
@@ -78,7 +78,7 @@ titheme <- function() {
         # title to roboto condensed, size 12
         plot.title = ggplot2::element_text(
             size = 13, face = "bold", colour = "black",
-            margin = ggplot2::margin(t = 0, r = 0, b = 10, l = 0)
+            margin = ggplot2::margin(t = 0, r = 0, b = 5, l = 0)
         )
     )
 }
@@ -103,12 +103,12 @@ titheme <- function() {
 #' titpalette(4)
 #'
 #' @export
-titpalette <- function(n = 3) {
+titpalette <- function(n = 3, order = NULL) {
     # Define the lookup table
     lookup <- list(
-        `2` = c("#75c8ae", "#e5771e"),
-        `3` = c("#75c8ae", "#886557", "#e5771e"),
-        `4` = c("#f75435", "#684c41", "#4fa3a5", "#fdae38")
+        `2` = c("#459395", "#FDA638"),
+        `3` = c("#459395", "#d36044", "#fdae38"),
+        `4` = c("#459395", "#d35a4a", "#FDA638", "#674A40")
     )
 
     # Check if n is a valid key in the lookup table
@@ -116,6 +116,17 @@ titpalette <- function(n = 3) {
         stop("n must be one of ", paste(names(lookup), collapse = ", "))
     }
 
-    # Return the corresponding palette
-    return(lookup[[as.character(n)]])
+    # Get the corresponding palette
+    palette <- lookup[[as.character(n)]]
+
+    # Reorder the palette if the order argument is specified
+    if (!is.null(order)) {
+        if (length(order) != length(palette)) {
+            stop("order must have the same length as the palette")
+        }
+        palette <- palette[order]
+    }
+
+    # Return the palette
+    return(palette)
 }

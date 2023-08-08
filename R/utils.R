@@ -132,3 +132,95 @@ match_grid <- function(grid, data) {
 
     return(data)
 }
+
+
+
+#' Get spatial predictions from a model
+#'
+#' This function generates spatial predictions from a model using a grid of
+#' points with a specified resolution. The predictions are returned as a tibble
+#' with columns for the x and y coordinates, the predicted values, the standard
+#' errors, and the year.
+#'
+#' @param model A model object.
+#' @param data A data frame containing the data used to fit the model.
+#' @param resolution The resolution of the grid used to generate predictions.
+#' @param ndraws The number of draws used to generate predictions.
+#' @param year The year for which to generate predictions. If "all", predictions
+#' are generated for all years in the data. If a numeric value, predictions are
+#' generated for that year.
+#'
+#' @return A tibble with columns for the x and y coordinates, the predicted
+#' values, the standard errors, and the year.
+#'
+#' @importFrom marginaleffects datagrid predictions
+#' @importFrom dplyr as_tibble mutate select
+#'
+#' @export
+get_spatial_preds <- function(model, data, resolution, ndraws, year = "all") {
+    if (year == "all") {
+        year <- as.numeric(levels(data$year))
+    } else if (year %in% unique(data$year)) {
+        year <- year
+    } else {
+        stop("year must be 'all' or a numeric value present in the data")
+    }
+
+    mgrid <- marginaleffects::datagrid(
+        model = model,
+        x = seq(min(data$x) - 100, max(data$x) + 100, by = resolution),
+        y = seq(min(data$y) - 100, max(data$y) + 100, by = resolution),
+        year = year
+    )
+
+    nsm1_preds <- marginaleffects::predictions(model,
+        newdata = mgrid,
+        type = "response", re_formula = NA, ndraws = ndraws
+    )
+
+    nsm1_preds <- dplyr::as_tibble(nsm1_preds) |>
+        dplyr::mutate(
+            se = (conf.high - conf.low) / 3.92
+        ) |>
+        dplyr::select(x, y, estimate, se, year)
+
+    return(nsm1_preds)
+}
+
+
+
+#' Get a raster from spatial predictions
+#'
+#' This function generates a raster from spatial predictions using a grid of
+#' points with a specified resolution. The raster is returned as a data frame
+#' with columns for the x and y coordinates and the predicted values.
+#'
+#' @param preds A tibble containing the spatial predictions.
+#' @param pop_contour A SpatVector object representing the polygon to use for
+#'   masking the raster.
+#' @param year The year to use for generating the raster.
+#' @param type The type of prediction to use for generating the raster.
+#' @param resolution The resolution of the grid used to generate the raster.
+#' @param fact The factor by which to disaggregate the raster.
+#'
+#' @return A data frame with columns for the x and y coordinates and the
+#' predicted values.
+#'
+#' @importFrom dplyr filter select as_tibble
+#' @importFrom terra rast disagg mask as.data.frame
+#'
+#' @export
+get_raster <- function(
+    preds, pop_contour, year = 2020, type = "estimate",
+    resolution = 50, fact = 2) {
+    mrast <- preds |>
+        dplyr::filter(year == !!year) |>
+        dplyr::select(x, y, !!type) |>
+        terra::rast(type = "xyz", crs = terra::crs(pop_contour)) |>
+        terra::disagg(fact = fact, method = "bilinear") |>
+        terra::mask(pop_contour) |>
+        terra::as.data.frame(xy = TRUE) |>
+        dplyr::as_tibble()
+
+    return(mrast)
+}
