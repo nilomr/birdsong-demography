@@ -193,7 +193,8 @@ dm1_p1 <- dm1_grid2 |>
         )
     ) +
     scale_x_continuous(
-        expand = c(.05, .05), breaks = c(0, 1500, 3000),
+        expand = c(.05, .05),
+        breaks = c(0, 1500, 3000),
         labels = c("0m", "1500m", "3000m")
     ) +
     scale_y_continuous(
