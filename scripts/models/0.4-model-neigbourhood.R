@@ -762,7 +762,7 @@ plot(nm3)
 # Test if the proportion of resident birds affecs the proportion of rare songs,
 # Since we know immigrants have bigegr repertoires, we can test if controlling
 # for the total neighbourhood repertoire changes things (the proportion of rare
-# songs changes nonlinearly with repertoire size)
+# songs changes with repertoire size)
 
 nf4 <- brms::bf(
     prop_rare ~ 0 + prop_resident * n_songs_current + year +
