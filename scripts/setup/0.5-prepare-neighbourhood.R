@@ -41,9 +41,6 @@ colnames(nestbox_distances) <- nestbox_data$nestbox
 nest_rm <- main_data$nestbox[!main_data$nestbox %in% nestbox_data$nestbox]
 
 
-main_data |> dplyr::select(pnum, resident, natal_box)
-
-
 main_data <- main_data |>
     dplyr::filter(year %in% c(2020, 2021, 2022))
 

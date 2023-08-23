@@ -8,6 +8,7 @@ script_names=(
   "setup/0.3-prepare-data-cont.R"
   "setup/0.3-prepare-data.R"
   "setup/0.4-prepare-songtypes.R"
+  "setup/0.5-prepare-neighbourhood.R"
 )
 
 # Define the total number of scripts to run

@@ -102,7 +102,6 @@ print(brms::hypothesis(rm1, "residentTRUE < 0")$hypothesis, digits = 2)
 # REPERTOIRE NOVELTY: RESIDENTS VS IMMIGRANTS ────────────────────────────── #
 
 
-
 rm2_data <- main_data |>
     dplyr::filter(
         year %in% c(2020, 2021, 2022),
@@ -113,7 +112,8 @@ rm2_data <- main_data |>
     ) |>
     dplyr::mutate(
         sampling_effort = total_recordings - missing_recordings,
-        year = as.factor(year)
+        year = as.factor(year),
+        prop_rare = rare_n / repertoire_size
     )
 
 rm2_data_std <- rm2_data |>
@@ -125,16 +125,17 @@ rm2_data_std <- rm2_data |>
     )
 
 
+# Do immigrant and resident birds differ in the proportion of rare songs?
 if2 <- brms::bf(
-    rare_n ~ 1 + resident + s(april_lay_date) +
+    prop_rare ~ 0 + resident + s(april_lay_date) +
         s(sampling_effort) + year + (1 | father)
 )
 
 rm2 <- brms::brm(
     if2,
     data = rm2_data_std,
-    family = poisson(),
-    iter = 2000,
+    family = brms::hurdle_lognormal(),
+    iter = 1500,
     warmup = 500,
     chains = 4,
     cores = 4,
@@ -145,5 +146,127 @@ rm2 <- brms::brm(
     file_refit = "on_change",
 )
 
-brms::pp_check(rm2, type = "bars", ndraws = 100)
+
 print(brms::hypothesis(rm2, "residentTRUE = 0")$hypothesis, digits = 2)
+
+
+# does the n of rare songs increase linearly with repertoire size?
+
+if3 <- brms::bf(
+    rare_n ~ 1 + repertoire_size + s(april_lay_date) +
+        s(sampling_effort) + year + (1 | father)
+)
+
+rm3 <- brms::brm(
+    if3,
+    data = rm2_data_std,
+    family = poisson(),
+    iter = 1500,
+    warmup = 500,
+    chains = 4,
+    cores = 4,
+    threads = brms::threading(2),
+    backend = "cmdstanr",
+    control = list(adapt_delta = 0.99),
+    file = file.path(config$path$fits, "rm3"),
+    file_refit = "on_change",
+)
+brms::conditional_effects(rm3)
+brms::pp_check(rm3, type = "bars", ndraws = 100)
+
+
+
+# Plot fit of rm3 (repertoire size only)
+
+rm3grid <- marginaleffects::datagrid(
+    model = rm3,
+    repertoire_size = seq(
+        min(rm2_data_std$repertoire_size, na.rm = TRUE),
+        max(rm2_data_std$repertoire_size, na.rm = TRUE),
+        by = 1
+    )
+)
+
+data <- rm2_data_std
+e <- residuals(rm3, summary = TRUE)[, "Estimate"]
+grid <- match_grid(rm3grid, data)
+
+rm3_grid2 <- marginaleffects::predictions(rm3,
+    newdata = grid,
+    type = "response", re_formula = NULL
+)
+rm3_grid2[["type"]] <- NULL
+rm3_grid2[["estimate_with_error"]] <- rm3_grid2[["estimate"]] + e
+
+rm3_grid2[["estimate_with_error"]] <- ifelse(
+    rm3_grid2[["estimate_with_error"]] < 0,
+    0,
+    rm3_grid2[["estimate_with_error"]]
+)
+rm3_grid2 <- dplyr::as_tibble(rm3_grid2)
+
+# mean predictions
+pred <- marginaleffects::predictions(rm3,
+    type = "response",
+    re_formula = NULL,
+    newdata = marginaleffects::datagrid(
+        repertoire_size = seq(
+            min(rm2_data_std$repertoire_size, na.rm = TRUE),
+            max(rm2_data_std$repertoire_size, na.rm = TRUE),
+            by = 1
+        )
+    )
+) |>
+    marginaleffects::posterior_draws()
+
+p_colors <- colorspace::desaturate(titpalette(3, order = c(2, 3, 1)), .4)
+
+# from p_colors[1] create a 3-color gradient based on opacity
+p_colors2 <- rev(c(
+    p_colors[1],
+    colorspace::lighten(p_colors[1], .5, space = "combined"),
+    colorspace::lighten(p_colors[1], .8, space = "combined")
+))
+rm3plot1 <-
+    pred |>
+    ggplot(aes(x = repertoire_size, y = draw)) +
+    ggdist::stat_interval(alpha = .5) +
+    geom_point(
+        data = rm3_grid2,
+        aes(
+            y = estimate_with_error
+        ),
+        alpha = 0.5,
+        size = .3,
+        color = p_colors[1],
+        position = position_jitter(width = 0.2, height = 0.2)
+    ) +
+    scale_color_manual(values = p_colors2) +
+    guides(colour = "none") +
+    scale_y_continuous(
+        expand = c(0.1, 0),
+    ) +
+    scale_x_continuous(
+        expand = c(0, 0),
+        breaks = seq(min(rm2_data_std$repertoire_size, na.rm = TRUE),
+            max(rm2_data_std$repertoire_size, na.rm = TRUE),
+            by = 2
+        )
+    ) +
+    labs(
+        x = "Repertoire Size",
+        y = "Number of Rare Songs",
+    ) +
+    guides(colour = "none") +
+    titheme() +
+    theme(
+        aspect.ratio = 1,
+        strip.background = element_blank(),
+        strip.text.x = element_blank()
+    )
+
+ggsave(
+    file.path(config$path$figures, "rare_vs_repsize.png"),
+    rm3plot1,
+    width = 3.5, height = 3.5, dpi = 300, bg = "white"
+)
