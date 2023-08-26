@@ -8,10 +8,15 @@
 
 # Session Data files
 .RData
+*.rds
+
 
 # User-specific files
 .Ruserdata
 /data/fits/
+/output/reports/
+/output/figures/ 
+# will add back in later
 
 # Example code in package build process
 *-Ex.R

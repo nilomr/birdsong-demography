@@ -95,24 +95,33 @@ neigh_data <- main_data |>
         # calculate the mean distance with boxes within 200m:
         mean_spat_dist = mean(nest_distance, na.rm = TRUE),
         mean_spat_dist_sd = sd(nest_distance, na.rm = TRUE),
+        mean_spat_dist_recorded = mean(nest_distance[n_vocalisations2 > 0], na.rm = TRUE),
         # calculate the proportion of neighbours that are resident
-        prop_resident = mean(resident2, na.rm = TRUE),
-        prop_resident_sd = sd(resident2, na.rm = TRUE),
+        # reverse resident2 so that TRUE = FALSE and FALSE = TRUE.
+        # I find it more intuitive to think about immigration.
+        resident2 = !resident2,
+        prop_immigrant = mean(resident2, na.rm = TRUE),
+        prop_immigrant_sd = sd(resident2, na.rm = TRUE),
+        prop_immigrant_recorded = mean(resident2[n_vocalisations2 > 0], na.rm = TRUE),
         # calculate the mean dispersal distance of neighbours
         mean_dispersal_distance = mean(dispersal_distance2, na.rm = TRUE),
         mean_dispersal_distance_sd = sd(dispersal_distance2, na.rm = TRUE),
+        mean_dispersal_distance_recorded = mean(dispersal_distance2[n_vocalisations2 > 0], na.rm = TRUE),
         # calculate the mean age of neighbours
         mean_age = mean(age2, na.rm = TRUE),
         mean_age_sd = sd(age2, na.rm = TRUE),
+        mean_age_recorded = mean(age2[n_vocalisations2 > 0], na.rm = TRUE),
         # add a list of all father2 that are not NA
         father_list = list(father2[!is.na(father2)])
     ) |>
     dplyr::ungroup() |>
     dplyr::select(
         pnum, pnum2, nestbox, year, year2, neighbours, recorded, mean_spat_dist,
-        mean_spat_dist_sd, prop_resident, prop_resident_sd,
+        mean_spat_dist_sd, mean_spat_dist_recorded, prop_immigrant,
+        prop_immigrant_sd, prop_immigrant_recorded,
         mean_dispersal_distance, mean_dispersal_distance_sd,
-        mean_age, mean_age_sd, father_list
+        mean_dispersal_distance_recorded,
+        mean_age, mean_age_sd, mean_age_recorded, father_list
     ) |>
     # remove where pnum is duplicated
     dplyr::distinct(pnum, .keep_all = TRUE)
@@ -153,7 +162,6 @@ neigh_data <- neigh_data |>
 
 
 # Prepare sharing data
-
 shframe <-
     main_data |>
     dplyr::select(pnum, nestbox, year, x, y, resident) |>
@@ -179,7 +187,6 @@ ssub <- sharing_data |>
     dplyr::select(pnum, pnum2, labels1, labels2, nestbox, nestbox2)
 
 
-# join ssub to shframe so that we add the information for any pnum that is in ssub to shframe:
 nsharing <- shframe |>
     dplyr::full_join(ssub |> dplyr::select(pnum, labels1), by = c(
         "pnum" = "pnum"
@@ -189,7 +196,6 @@ nsharing <- shframe |>
     ), relationship = "many-to-many") |>
     # remove identical rows
     dplyr::distinct(pnum, pnum2, .keep_all = TRUE) |>
-    # create nestbox2 column with everything after the first 5 characters of pnum2
     dplyr::mutate(pnum2 = stringr::str_remove(pnum2, "empty_")) |>
     dplyr::mutate(pnum = stringr::str_remove(pnum, "empty_")) |>
     dplyr::mutate(nestbox2 = stringr::str_sub(pnum2, 6))
@@ -225,54 +231,85 @@ classinfo <- manual_labels |>
         extra = "drop"
     ) |>
     dplyr::mutate(year = stringr::str_sub(class_id, 1, 4)) |>
+    dplyr::group_by(year) |>
+    dplyr::mutate( # add count of total class_label (alread in the df) per year
+        n_year = length(class_label)
+    ) |>
+    dplyr::ungroup() |>
     dplyr::group_by(class_label, year) |>
     # for each year count how many pnums have a class_label
     dplyr::mutate(
-        year_freq =
-            length(unique(pnum)), rare = ifelse(year_freq < 5, TRUE, FALSE)
-    )
-
-# get a list of rare songs
-rare_songs <- classinfo |>
-    dplyr::filter(rare == TRUE) |>
-    dplyr::pull(class_label) |>
-    unique()
+        year_freq = length(unique(pnum)),
+        rare = ifelse(year_freq < 5, TRUE, FALSE),
+        # calculate the relative frequency within each year
+        rel_freq = year_freq / n_year
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::arrange(class_label)
 
 
-# join on pnum
+# get lists with the rare songs in each year
+rare_songs <- list()
+for (year in unique(classinfo$year)) {
+    rare_songs[[year]] <- classinfo |>
+        dplyr::filter(year == !!year, rare == TRUE) |>
+        dplyr::pull(class_label) |>
+        unique()
+}
+
+
 sharing_df <- dplyr::left_join(
     sharing_current, sharing_past,
     by = "pnum", suffix = c("", "2")
 ) |>
     dplyr::select(pnum, year, current_labels, past_labels) |>
-    # get unly unique songs in each list
     dplyr::mutate(
-        current_labels = purrr::map(current_labels, unique),
-        past_labels = purrr::map(past_labels, unique)
-    ) |>
-    dplyr::mutate(
-        n_songs_current = unlist(purrr::map(current_labels, length)),
-        n_songs_past = unlist(purrr::map(past_labels, length)),
+        unique_current_labels = purrr::map(current_labels, unique),
+        unique_past_labels = purrr::map(past_labels, unique),
+        n_current_songs = unlist(purrr::map(current_labels, length)),
+        n_unique_current_songs = unlist(purrr::map(unique_current_labels, length)),
+        n_songs_past = unlist(purrr::map(unique_past_labels, length)),
         n_shared = unlist(purrr::map2(
-            past_labels,
-            current_labels, ~ length(intersect(.x, .y))
+            unique_past_labels,
+            unique_current_labels,
+            ~ length(intersect(.x, .y))
         )),
-        prop_shared = unlist(purrr::map2_dbl(n_shared, n_songs_current, ~ .x / .y)),
-        n_rare = unlist(purrr::map(current_labels, ~ sum(.x %in% rare_songs))),
-        prop_rare = unlist(purrr::map2_dbl(n_rare, n_songs_current, ~ .x / .y))
+        prop_shared = unlist(purrr::map2_dbl(
+            n_shared, n_unique_current_songs, ~ .x / .y
+        )),
+        n_rare = unlist(purrr::map2_dbl(
+            unique_current_labels, year, ~ {
+                year_val <- eval(as.character(.y))
+                sum(.x %in% rare_songs[[as.character(year_val)]])
+            }
+        )),
+        prop_rare = unlist(purrr::map2_dbl(
+            n_rare, n_unique_current_songs, ~ .x / .y
+        )),
+        diversity = unlist(purrr::map2_dbl(
+            n_unique_current_songs, n_current_songs, ~ .x / .y
+        )),
+        novelty = scales::rescale(1 - log(unlist(purrr::map(
+            unique_current_labels, ~ {
+                mean(classinfo |>
+                    dplyr::filter(class_label %in% .x) |>
+                    dplyr::distinct(class_label, .keep_all = TRUE) |>
+                    dplyr::pull(rel_freq))
+            }
+        ))))
     )
 
-
 # add sharing_df to neigh_data
-neigh_data <- neigh_data |>
+neighbour_data <- neigh_data |>
     dplyr::left_join(sharing_df, by = c("pnum", "year")) |>
     dplyr::left_join(nestbox_data, by = c("nestbox" = "nestbox")) |>
     dplyr::filter(!grepl("empty", pnum)) |>
     # remove all columns after the column named 'y'
     dplyr::select(pnum:y)
 
+
 # save neighbourhood_data to a csv
-neigh_data |>
+neighbour_data |>
     readr::write_csv(
-        file.path(config$path$derived_data, "neighbourh_data.csv")
+        file.path(config$path$derived_data, "neighbour_data.csv")
     )

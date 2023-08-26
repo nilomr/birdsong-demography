@@ -2,11 +2,12 @@
 
 # Define the list of script names
 script_names=(
-  "setup/0.1-setup.R"
+  "setup/0.0-setup.R"
+  "setup/0.1-assign-ids.R"
   "setup/0.2-song-similarity-cont.R"
-  "setup/0.2-song-similarity.R"
+  "setup/0.2.1-song-similarity.R"
   "setup/0.3-prepare-data-cont.R"
-  "setup/0.3-prepare-data.R"
+  "setup/0.3.1-prepare-data.R"
   "setup/0.4-prepare-songtypes.R"
   "setup/0.5-prepare-neighbourhood.R"
 )

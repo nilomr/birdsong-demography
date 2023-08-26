@@ -37,7 +37,7 @@ nm_data <- neighbour_df |>
     dplyr::filter(year %in% c(2021, 2022)) |>
     dplyr::select(
         pnum, prop_shared, mean_age, x, y, year, prop_rare,
-        n_songs_current, neighbours, prop_same_birds, prop_resident,
+        n_unique_current_songs, neighbours, prop_same_birds, prop_immigrant,
         mean_dispersal_distance
     ) |>
     dplyr::mutate(
@@ -52,7 +52,7 @@ nm_data_std <- nm_data |>
     dplyr::mutate_at(
         vars(
             mean_age, neighbours, prop_same_birds,
-            prop_resident, mean_dispersal_distance
+            prop_immigrant, mean_dispersal_distance
         ),
         function(x) (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
     )
@@ -160,9 +160,9 @@ nm1 <- brms::brm(
 # Immigration vs cultural turnover
 # NOTE: this should be proportion of new birds that are immigrants?
 nf2 <- brms::bf(
-    prop_shared ~ 0 + prop_resident + prop_same_birds + year +
+    prop_shared ~ 0 + prop_immigrant + prop_same_birds + year +
         gp(x, y, by = year, k = 25, c = 5 / 4, scale = FALSE),
-    hu ~ prop_resident + prop_same_birds + year
+    hu ~ prop_immigrant + prop_same_birds + year
 )
 
 nm2 <- brms::brm(
@@ -183,10 +183,10 @@ nm2 <- brms::brm(
 # Dispersal vs cultural turnover
 
 nf3 <- brms::bf(
-    prop_shared ~ 0 + mean_dispersal_distance + prop_resident +
+    prop_shared ~ 0 + mean_dispersal_distance + prop_immigrant +
         prop_same_birds + year +
         gp(x, y, by = year, k = 25, c = 5 / 4, scale = FALSE),
-    hu ~ mean_dispersal_distance + prop_resident + prop_same_birds + year
+    hu ~ mean_dispersal_distance + prop_immigrant + prop_same_birds + year
 )
 
 nm3 <- brms::brm(
@@ -409,7 +409,7 @@ ggsave(
 
 nm2grid <- marginaleffects::datagrid(
     model = nm2,
-    prop_resident = nm_data_std$prop_resident,
+    prop_immigrant = nm_data_std$prop_immigrant,
     prop_same_birds = mean(nm_data$prop_same_birds)
 )
 
@@ -430,9 +430,9 @@ pred <- marginaleffects::predictions(nm2,
     type = "response",
     re_formula = NULL,
     newdata = marginaleffects::datagrid(
-        prop_resident = seq(
-            min(nm_data_std$prop_resident),
-            max(nm_data_std$prop_resident),
+        prop_immigrant = seq(
+            min(nm_data_std$prop_immigrant),
+            max(nm_data_std$prop_immigrant),
             by = 0.1
         )
     )
@@ -440,18 +440,18 @@ pred <- marginaleffects::predictions(nm2,
     marginaleffects::posterior_draws()
 
 # convert estimates back to the original scale
-nm2_grid2 <- og_scale(nm_data, nm2_grid2, v = "prop_resident")
-pred <- og_scale(nm_data, pred, v = "prop_resident")
+nm2_grid2 <- og_scale(nm_data, nm2_grid2, v = "prop_immigrant")
+pred <- og_scale(nm_data, pred, v = "prop_immigrant")
 
 
 nm2plot1 <-
     pred |>
-    ggplot(aes(x = 1 - prop_resident, y = 1 - draw)) +
+    ggplot(aes(x = 1 - prop_immigrant, y = 1 - draw)) +
     geom_point(
         data = nm2_grid2,
         aes(
             y = 1 - estimate_with_error,
-            x = 1 - prop_resident
+            x = 1 - prop_immigrant
         ),
         alpha = 0.5,
         size = .3,
@@ -489,7 +489,7 @@ nm2plot1 <-
 nm3grid <- marginaleffects::datagrid(
     model = nm3,
     mean_dispersal_distance = nm_data_std$mean_dispersal_distance,
-    prop_resident = mean(nm_data$prop_resident),
+    prop_immigrant = mean(nm_data$prop_immigrant),
     prop_same_birds = mean(nm_data$prop_same_birds)
 )
 
@@ -632,8 +632,8 @@ p2 <- nm1_distdraws |>
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
     ggdist::stat_pointinterval(
         alpha = .7,
-        point_size = 4,
-        interval_size_range = c(0.8, 2),
+        point_size = 2,
+        interval_size_range = c(0.7, 1.5),
         position = position_dodge(width = .2, preserve = "single"),
         show.legend = FALSE
     ) +

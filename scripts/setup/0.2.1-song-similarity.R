@@ -1,6 +1,5 @@
 # CONFIGURATION ──────────────────────────────────────────────────────────── #
 config <- config::get()
-source(file.path(config$path$source, "rplot.R"))
 box::use(R / io[read_csv_file])
 
 # READ IN THE DATA ───────────────────────────────────────────────────────── #

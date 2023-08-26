@@ -1,7 +1,6 @@
 # CONFIGURATION ──────────────────────────────────────────────────────────── #
 
 config <- config::get()
-source(file.path(config$path$source, "rplot.R"))
 box::use(R / io[read_csv_file])
 
 # CALCULATE POST-NATAL DISPERSAL DISTANCES FOR RESIDENT BIRDS ────────────── #
@@ -69,91 +68,3 @@ dir.create(base_dir, recursive = TRUE, showWarnings = FALSE)
 sf::st_write(pop_contour, file.path(
     config$path$derived_data, "wytham_map", "perimeter.shp"
 ), append = FALSE)
-
-
-
-# PLOTS ──────────────────────────────────────────────────────────────────── #
-
-### Plot the distribution of dispersal distances
-
-main_data |>
-    # plot a histogram with the distribution of distances
-    ggplot2::ggplot(ggplot2::aes(x = dispersal_distance)) +
-    ggplot2::geom_histogram(bins = 100) +
-    ggplot2::labs(x = "Distance (m)", y = "Count") +
-    # add more x-axis ticks
-    ggplot2::scale_x_continuous(breaks = seq(0, 3500, 500)) +
-    theme_frame(text_size = 12)
-
-# Plot the centred distribution of distances for each father
-main_data |>
-    dplyr::group_by(father) |>
-    dplyr::mutate(n = dplyr::n()) |>
-    dplyr::filter(n > 1) |>
-    # ungroup and select the father and dispersal distance columns
-    dplyr::ungroup() |>
-    dplyr::select(father, dispersal_distance, n) |>
-    dplyr::filter(!is.na(dispersal_distance), n > 1) |>
-    # 0-centre the dispersal distances for each father
-    dplyr::group_by(father) |>
-    dplyr::mutate(
-        dispersal_distance = dispersal_distance - mean(dispersal_distance)
-    ) |>
-    dplyr::ungroup() |>
-    # plot a histogram with the distribution of distances
-    ggplot2::ggplot(ggplot2::aes(x = dispersal_distance)) +
-    ggplot2::geom_histogram(bins = 100) +
-    ggplot2::labs(x = "Distance (m)", y = "Count")
-
-
-
-## Calculate voronoi neighbors for each nestbox, by year
-### Plot map to check all is ok
-
-
-# TODO: review - remove or integrate
-
-
-# pop_contour |>
-#     ggplot2::ggplot() +
-#     ggplot2::geom_sf() +
-#     ggplot2::coord_sf(crs = 27700) +
-#     ggplot2::geom_point(
-#         data = nestbox_data,
-#         ggplot2::aes(x = x, y = y),
-#         size = 0.5,
-#         shape = 21,
-#         fill = "black",
-#         colour = "black"
-#     ) +
-#     theme_frame(text_size = 12)
-
-
-
-# sf_main_data <- main_data |>
-#     dplyr::filter(year %in% c(2020)) |>
-#     dplyr::filter(!is.na(x) & !is.na(y)) |>
-#     sf::st_as_sf(coords = c("x", "y"), remove = F, crs = 27700)
-
-# territories <- sf::st_voronoi(sf::st_union(sf_main_data))
-# territories <- sf::st_intersection(
-#     sf::st_cast(territories),
-#     sf::st_union(pop_contour)
-# )
-
-# # Add info on territory size
-# territories_area <- sf::st_sf(
-#     territory_area = as.numeric(sf::st_area(territories)),
-#     geom = territories
-# )
-# birds.ids <- sf_main_data[, c(1, 2, 3, 4)]
-# territories_area <- sf::st_join(territories_area, sf_main_data)
-
-
-# # Find first order neighbors
-# neighbors <- sf::st_touches(territories_area, territories_area)
-
-# # Add neighbors to territories_area
-# territories_area$neighbors <- apply(neighbors, 1, function(x) {
-#     paste(territories_area$pnum[x], collapse = ", ")
-# })

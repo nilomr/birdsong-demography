@@ -25,7 +25,7 @@ songmeta <- songmeta |>
     dplyr::filter(!grepl("20211O115|20221MP32", class_id))
 
 
-# CLUSTER SONGS ──────────────────────────────────────────────────────────── #
+# CALCULATE AMED -------------------------------------------------------------
 
 # Find median feature vector for each label
 songfeats_median <- songfeats |>
@@ -37,7 +37,6 @@ songfeats_median <- songfeats_median |>
     dplyr::mutate(pnum = stringr::str_split(class_id, "_", simplify = TRUE)[, 1]) |>
     dplyr::select(pnum, class_id, dplyr::everything())
 
-# library(Matrix)
 
 # Get unique pnums
 unique_pnums <- unique(songfeats_median$pnum)

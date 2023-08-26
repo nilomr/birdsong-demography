@@ -2,7 +2,7 @@
 
 config <- config::get()
 box::use(R / io[read_csv_file])
-box::use(R / rplot[titheme, titpalette])
+box::use(R / rplot[titheme, titpalette, yellows])
 box::use(R / utils[og_scale, match_grid])
 box::use(patchwork[...])
 box::use(ggplot2[...])
@@ -54,8 +54,9 @@ im1_data_std <- im1_data |>
 
 # DEFINE AND FIT IM1 ─────────────────────────────────────────────────────── #
 
+
 if1 <- brms::bf(
-    mean_dist1 ~ 1 + resident_status * year_born_diff * nest_distance +
+    mean_dist1 ~ 0 + resident_status + year_born_diff + nest_distance +
         year + (1 | mm(father, father2))
 )
 
@@ -63,7 +64,7 @@ im1 <- brms::brm(
     if1,
     data = im1_data_std,
     family = gaussian(),
-    iter = 2000,
+    iter = 1000,
     warmup = 500,
     chains = 4,
     cores = 4,
@@ -115,42 +116,22 @@ ggsave(
     scale = 1.3
 )
 
-get_vpd <- function(icc_decomp) {
-    return(
-        dplyr::tibble(
-            icc = icc_decomp$ICC_decomposed,
-            ciL = icc_decomp$ICC_CI[[1]],
-            ciR = icc_decomp$ICC_CI[[2]]
-        )
-    )
-}
-brms::conditional_effects(im1)
-brms::pp_check(im1)
-plot(im1)
-
-get_vpd(performance::variance_decomposition(im1, robust = TRUE))
-
 
 # PLOT EFFECT OF RESIDENT STATUS ON SIMILARITY ───────────────────────────── #
 
-im1_comp1 <- marginaleffects::comparisons(im1,
+
+im1_draws <- marginaleffects::avg_slopes(im1,
     variables = "resident_status",
     type = "response",
     re_formula = NULL,
     newdata = marginaleffects::datagrid(
-        nest_distance = min(im1_data_std$nest_distance),
+        nest_distance = min(dm1_data_std$nest_distance),
         year_born_diff = "1",
-        year = "2020"
+        year = 2020
     )
-)
-
-im1_residentdraws <- im1_comp1 |>
+) |>
     marginaleffects::posterior_draws() |>
-    dplyr::as_tibble() |>
-    dplyr::mutate(
-        resident_status = as.factor(resident_status)
-    )
-
+    dplyr::as_tibble()
 
 # Hypothesis test that immigrant birds are more dissimilar than resident birds
 # when birds are in the same area and are one year apart
@@ -169,17 +150,7 @@ hy1m1 <- marginaleffects::predictions(
 print(hy1m1$hypothesis, digits = 2)
 
 
-
-lims <- c(min(im1_residentdraws$conf.low), max(im1_residentdraws$conf.high))
-range <- lims[2] - lims[1]
-lims <- lims + c(-0.4, 0.4) * range
-# -0.0184580681775  0.0096323341025
-
-ticks <- c(-0.020, -0.016, -0.012, -0.008, -0.004, 0, 0.004, 0.008)
-labels <- ticks
-
-
-p1 <- im1_residentdraws |>
+p1 <- im1_draws |>
     ggplot(aes(
         x = draw,
         fill = contrast,
@@ -193,17 +164,11 @@ p1 <- im1_residentdraws |>
             "Both immigrants\nvs both residents",
             "One resident\nvs both resident"
         ),
-        values = titpalette(2)
+        values = yellows
     ) +
     titheme() +
-    guides(
-        fill = ggplot2::guide_legend(
-            title = "Comparison",
-            byrow = TRUE
-        )
-    ) +
     theme(
-        aspect.ratio = .5,
+        aspect.ratio = .4,
         axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank(),
@@ -211,16 +176,16 @@ p1 <- im1_residentdraws |>
     scale_y_continuous(expand = c(0, 0)) +
     labs(
         y = "Density",
-        title = "Effect of Resident Status on Vocal Similarity"
+        title = "Immigration"
     )
 
-p2 <- im1_residentdraws |>
+p2 <- im1_draws |>
     ggplot(aes(x = draw, color = contrast)) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
     ggdist::stat_pointinterval(
         alpha = .7,
-        point_size = 4,
-        interval_size_range = c(0.8, 2),
+        point_size = 2,
+        interval_size_range = c(0.7, 1.5),
         position = position_dodge(width = .2, preserve = "single"),
         show.legend = FALSE
     ) +
@@ -237,23 +202,28 @@ p2 <- im1_residentdraws |>
         axis.ticks.y = element_blank()
     ) +
     labs(
-        x = "Change in Vocal Similarity"
+        x = "Change in Cultural Similarity"
     ) +
-    scale_color_manual(values = titpalette(2))
+    scale_color_manual(values = yellows)
 
 fullplot <- (p1 / p2) &
-    coord_cartesian(xlim = lims) &
+    scale_x_continuous(
+        breaks = c(-0.02, -0.01, 0, 0.01, 0.02),
+    ) &
+    coord_cartesian(xlim = c(-0.02, 0.015)) &
     guides(
         colour = "none",
         fill = guide_legend(
-            title = "Contrast",
+            title = "Comparison",
             byrow = TRUE, title.position = "top"
         )
     ) &
     theme(legend.spacing.y = unit(.2, "cm"))
 
+saveRDS(fullplot, file.path(config$path$figures, "individual_immigration.rds"))
+
 ggsave(
-    file.path(config$path$figures, "resident_status_contrast.png"),
+    file.path(config$path$figures, "individual_immigration.png"),
     plot = fullplot,
     width = 15,
     height = 10,
