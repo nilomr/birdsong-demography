@@ -34,9 +34,11 @@ titheme <- function() {
             linetype = 1
         ),
         axis.title.y = ggplot2::element_text(
+            size = 12,
             margin = ggplot2::margin(t = 0, r = 10, b = 0, l = 0)
         ),
         axis.title.x = ggplot2::element_text(
+            size = 12,
             margin = ggplot2::margin(t = 10, r = 0, b = 0, l = 0)
         ),
         strip.background = ggplot2::element_rect(
@@ -118,3 +120,5 @@ reds <- c("#d35a4a", "#db7b6e", "#e49c92", "#edbdb6")
 blues <- c("#539ca1", "#386e72")
 #' @export
 yellows <- c("#fdae38", "#c58439")
+#' @export
+persian <- c("#3b6b7e", "#577383")

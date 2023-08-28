@@ -29,6 +29,12 @@ manual_labels <- read_csv_file(
     file.path(config$path$derived_data, "manual_labels.csv")
 )
 
+
+# count where recorded = 0 in neighbour_df
+neighbour_df |>
+    dplyr::filter(recorded == 1) |>
+    nrow()
+
 # BUILD PLOTS ---------------------------------------------------------------
 
 # Plot 1: Neighbourhood data
@@ -51,7 +57,7 @@ for (i in 1:4) {
     y_col <- c("recorded", "prop_immigrant_recorded", "mean_dispersal_distance_recorded", "mean_age_recorded")[i]
     x_col <- c("neighbours", "prop_immigrant", "mean_dispersal_distance", "mean_age")[i]
 
-    p <- neigh_data |>
+    p <- neighbour_df |>
         ggplot(aes_string(y = y_col, x = x_col)) +
         geom_point(fill = colors[i], alpha = .3, shape = 21, stroke = NA, size = 2) +
         geom_smooth(method = "lm", se = FALSE, color = colorspace::darken(colors[i], .2), linetype = 1) +

@@ -42,12 +42,12 @@ nest_rm <- main_data$nestbox[!main_data$nestbox %in% nestbox_data$nestbox]
 
 
 main_data <- main_data |>
-    dplyr::filter(year %in% c(2020, 2021, 2022))
+    dplyr::filter(year %in% c(2019, 2020, 2021, 2022))
 
 
 fake_rows <- tidyr::expand_grid(
     nestbox = unique(main_data$nestbox),
-    year = 2020:2022
+    year = 2019:2022
 ) |>
     dplyr::anti_join(main_data, by = c("nestbox", "year")) |>
     dplyr::mutate(
@@ -305,7 +305,9 @@ neighbour_data <- neigh_data |>
     dplyr::left_join(nestbox_data, by = c("nestbox" = "nestbox")) |>
     dplyr::filter(!grepl("empty", pnum)) |>
     # remove all columns after the column named 'y'
-    dplyr::select(pnum:y)
+    dplyr::select(pnum:y) |>
+    # remove where year is 2019
+    dplyr::filter(year != 2019)
 
 
 # save neighbourhood_data to a csv

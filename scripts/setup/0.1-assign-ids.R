@@ -1,7 +1,11 @@
 # CONFIGURATION ──────────────────────────────────────────────────────────── #
+
 config <- config::get()
-source(file.path(config$path$source, "rplot.R"))
 box::use(R / io[read_csv_file])
+box::use(R / rplot[titheme])
+box::use(patchwork[...])
+box::use(ggplot2[...])
+
 
 # READ IN THE DATA ───────────────────────────────────────────────────────── #
 
@@ -162,7 +166,7 @@ m <- song_dists_long |>
         )
     )
 
-ids = dplyr::tibble(
+ids <- dplyr::tibble(
     pnum = c(m$pnum, m$pnum2),
     bird_id = c(m$bird_id, m$bird_id2)
 )
@@ -198,7 +202,7 @@ cat(
 )
 
 # count how many unique fathers there are in main_data_s
-nid = length(unique(main_data_s$father[!is.na(main_data_s$father) &
+nid <- length(unique(main_data_s$father[!is.na(main_data_s$father) &
     main_data_s$year %in% c(2020, 2021, 2022)]))
 
 cat("Number of unique fathers:", nid, "\n")
@@ -284,22 +288,20 @@ dist_dists <- song_dists_long_same_bird |>
     theme(aspect.ratio = 1) +
     scale_color_manual(
         values = colors,
-        labels = c("Same\nbirds", "Different\nbirds"),
+        labels = rev(c("Same\nbirds", "Different\nbirds")),
         name = "Comparison"
     ) +
     scale_fill_manual(
         values = colors,
-        labels = c("Same\nbirds", "Different\nbirds"),
+        labels = rev(c("Same\nbirds", "Different\nbirds")),
         name = "Comparison"
     ) +
     guides(
         fill = guide_legend(
             byrow = TRUE, title.position = "top",
-            reverse = TRUE
         ),
         color = guide_legend(
             byrow = TRUE, title.position = "top",
-            reverse = TRUE
         )
     ) +
     theme(legend.spacing.y = unit(.1, "cm")) +

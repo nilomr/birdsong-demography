@@ -9,9 +9,9 @@ box::use(ggplot2[...])
 
 # LOAD DATA ──────────────────────────────────────────────────────────────── #
 
-age_effect <- readRDS(file.path(config$path$figures, "individual_age.rds"))
-dispersal_effect <- readRDS(file.path(config$path$figures, "individual_dispersal.rds"))
-immigration_effect <- readRDS(file.path(config$path$figures, "individual_immigration.rds"))
+age_effect <- readRDS(file.path(config$path$figures, "age_m_1.rds"))
+dispersal_effect <- readRDS(file.path(config$path$figures, "disp_m_1.rds"))
+immigration_effect <- readRDS(file.path(config$path$figures, "imm_m_1.rds"))
 
 
 # BUILD THE PLOT ─────────────────────────────────────────────────────────── #

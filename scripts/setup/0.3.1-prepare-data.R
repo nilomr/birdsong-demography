@@ -85,10 +85,19 @@ sharing_data <- sharing_data |>
 sharing_data <- sharing_data |>
     dplyr::mutate(
         age = as.numeric(age),
-        age2 = as.numeric(age2)
+        age2 = as.numeric(age2), age_difference = abs(age - age2),
+        year_born_diff = abs(year_born - year_born2)
     ) |>
-    dplyr::mutate(age_difference = abs(age - age2)) |>
-    dplyr::mutate(year_born_diff = abs(year_born - year_born2))
+    # Recode age difference
+    dplyr::mutate(
+        year_born_diff = dplyr::case_when(
+            year_born_diff == 0 ~ "0",
+            year_born_diff == 1 ~ "1",
+            year_born_diff == 2 ~ "2",
+            year_born_diff == 3 ~ "3",
+            year_born_diff >= 4 ~ "4+",
+        )
+    )
 
 
 # Clean and order columns

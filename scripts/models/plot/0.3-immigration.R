@@ -11,37 +11,41 @@ box::use(ggplot2[...])
 # ──── LOAD DATA ──────────────────────────────────────────────────────────────
 
 
-age_m_1 <- readRDS(file.path(config$path$fits, "age_m_1.rds"))
+imm_m_1 <- readRDS(file.path(config$path$fits, "imm_m_1.rds"))
 
 
+# PLOT EFFECT OF RESIDENT STATUS ON SIMILARITY ───────────────────────────── #
 
-# ──── MARGINAL EFFECT OF AGE DIFFERENCE ──────────────────────────────────────
 
-age_m_1_agedraws <- marginaleffects::avg_slopes(age_m_1,
-    variables = "year_born_diff",
+imm_m_1_draws <- marginaleffects::avg_slopes(imm_m_1,
+    variables = "resident_status",
     type = "response",
     re_formula = NULL,
     newdata = marginaleffects::datagrid(
-        year_born_diff = c("0", "1", "2", "3", "4+"),
-        nest_distance = mean(age_m_1$data$nest_distance),
-        natal_distance =
-            mean(age_m_1$data$natal_distance)
+        nest_distance = min(dm1_data_std$nest_distance),
+        year_born_diff = "1",
+        year = 2020
     )
 ) |>
     marginaleffects::posterior_draws() |>
     dplyr::as_tibble()
 
 
-p1 <- age_m_1_agedraws |>
+p1 <- imm_m_1_draws |>
     ggplot(aes(
         x = draw,
-        fill = rev(contrast)
+        fill = contrast,
     )) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
-    ggdist::stat_slab(alpha = .9) +
+    ggdist::stat_slab(
+        alpha = .8
+    ) +
     scale_fill_manual(
-        labels = c("3+ years", "3 years", "2 years", "1 year"),
-        values = reds
+        labels = c(
+            "Both immigrants\nvs both residents",
+            "One resident\nvs both resident"
+        ),
+        values = yellows
     ) +
     titheme() +
     theme(
@@ -53,11 +57,11 @@ p1 <- age_m_1_agedraws |>
     scale_y_continuous(expand = c(0, 0)) +
     labs(
         y = "Density",
-        title = "Age Difference",
+        title = "Immigration"
     )
 
-p2 <- age_m_1_agedraws |>
-    ggplot(aes(x = draw, color = rev(contrast))) +
+p2 <- imm_m_1_draws |>
+    ggplot(aes(x = draw, color = contrast)) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
     ggdist::stat_pointinterval(
         alpha = .7,
@@ -81,23 +85,20 @@ p2 <- age_m_1_agedraws |>
     labs(
         x = "Change in Cultural Similarity"
     ) +
-    scale_color_manual(values = reds)
+    scale_color_manual(values = yellows)
 
-fullplot <- (p1 / p2) +
+fullplot <- (p1 / p2) &
     scale_x_continuous(
-        breaks = c(-0.015, -0.010, -0.005, 0, 0.005),
-        labels = c(-0.015, -0.010, -0.005, 0, 0.005)
+        breaks = c(-0.02, -0.01, 0, 0.01, 0.02),
     ) &
-    coord_cartesian(xlim = c(-0.015, 0.003)) &
+    coord_cartesian(xlim = c(-0.02, 0.015)) &
     guides(
         colour = "none",
         fill = guide_legend(
-            title = "Difference",
-            byrow = TRUE, title.position = "top",
-            reverse = TRUE
+            title = "Comparison",
+            byrow = TRUE, title.position = "top"
         )
     ) &
-    theme(legend.spacing.y = unit(.1, "cm"))
+    theme(legend.spacing.y = unit(.2, "cm"))
 
-
-saveRDS(fullplot, file.path(config$path$figures, "age_m_1.rds"))
+saveRDS(fullplot, file.path(config$path$figures, "imm_m_1.rds"))

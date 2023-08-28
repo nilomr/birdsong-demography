@@ -11,37 +11,55 @@ box::use(ggplot2[...])
 # ──── LOAD DATA ──────────────────────────────────────────────────────────────
 
 
-age_m_1 <- readRDS(file.path(config$path$fits, "age_m_1.rds"))
+disp_m_1 <- readRDS(file.path(config$path$fits, "disp_m_1.rds"))
 
 
+# MARGINAL EFFECT OF NATAL AND TERRITORY DISTANCE ────────────────────────── #
 
-# ──── MARGINAL EFFECT OF AGE DIFFERENCE ──────────────────────────────────────
 
-age_m_1_agedraws <- marginaleffects::avg_slopes(age_m_1,
-    variables = "year_born_diff",
+disp_m_1_draws1 <- marginaleffects::avg_slopes(disp_m_1,
+    variables = "natal_distance",
     type = "response",
     re_formula = NULL,
     newdata = marginaleffects::datagrid(
-        year_born_diff = c("0", "1", "2", "3", "4+"),
-        nest_distance = mean(age_m_1$data$nest_distance),
-        natal_distance =
-            mean(age_m_1$data$natal_distance)
+        nest_distance = min(disp_m_1$data$nest_distance)
     )
 ) |>
     marginaleffects::posterior_draws() |>
     dplyr::as_tibble()
 
+disp_m_1_draws2 <- marginaleffects::avg_slopes(disp_m_1,
+    variables = "nest_distance",
+    type = "response",
+    re_formula = NULL,
+    newdata = marginaleffects::datagrid(
+        natal_distance = min(disp_m_1$data$natal_distance)
+    )
+) |>
+    marginaleffects::posterior_draws() |>
+    dplyr::as_tibble() |>
+    dplyr::mutate()
 
-p1 <- age_m_1_agedraws |>
+disp_m_1_distdraws <- dplyr::bind_rows(
+    disp_m_1_draws1 |>
+        dplyr::mutate(term = "natal_distance"),
+    disp_m_1_draws2 |>
+        dplyr::mutate(term = "nest_distance")
+)
+
+p1 <- disp_m_1_distdraws |>
     ggplot(aes(
         x = draw,
-        fill = rev(contrast)
+        fill = term,
     )) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
-    ggdist::stat_slab(alpha = .9) +
+    ggdist::stat_slab(
+        alpha = .8
+    ) +
     scale_fill_manual(
-        labels = c("3+ years", "3 years", "2 years", "1 year"),
-        values = reds
+        name = "Variable",
+        labels = c("Natal\nDistance", "Territory\nDistance"),
+        values = blues
     ) +
     titheme() +
     theme(
@@ -53,11 +71,11 @@ p1 <- age_m_1_agedraws |>
     scale_y_continuous(expand = c(0, 0)) +
     labs(
         y = "Density",
-        title = "Age Difference",
+        title = "Dispersal",
     )
 
-p2 <- age_m_1_agedraws |>
-    ggplot(aes(x = draw, color = rev(contrast))) +
+p2 <- disp_m_1_distdraws |>
+    ggplot(aes(x = draw, color = term)) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
     ggdist::stat_pointinterval(
         alpha = .7,
@@ -73,7 +91,7 @@ p2 <- age_m_1_agedraws |>
             margin =
                 margin(t = 10, r = 0, b = 0, l = 0)
         ),
-        aspect.ratio = .1, # remove y axis text:
+        aspect.ratio = .1,
         axis.title.y = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank()
@@ -81,7 +99,7 @@ p2 <- age_m_1_agedraws |>
     labs(
         x = "Change in Cultural Similarity"
     ) +
-    scale_color_manual(values = reds)
+    scale_color_manual(values = blues)
 
 fullplot <- (p1 / p2) +
     scale_x_continuous(
@@ -92,12 +110,11 @@ fullplot <- (p1 / p2) +
     guides(
         colour = "none",
         fill = guide_legend(
-            title = "Difference",
-            byrow = TRUE, title.position = "top",
-            reverse = TRUE
+            title = "Variable",
+            byrow = TRUE, title.position = "top"
         )
     ) &
-    theme(legend.spacing.y = unit(.1, "cm"))
+    theme(legend.spacing.y = unit(.2, "cm"))
 
 
-saveRDS(fullplot, file.path(config$path$figures, "age_m_1.rds"))
+saveRDS(fullplot, file.path(config$path$figures, "disp_m_1.rds"))

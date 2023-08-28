@@ -134,6 +134,72 @@ match_grid <- function(grid, data) {
 }
 
 
+#' Calculate partial residuals
+#'
+#' This function calculates the partial residuals for a given model, data, and grid.
+#'
+#' @param model a fitted model object
+#' @param data a data frame containing the data used to fit the model
+#' @param datagrid a data frame containing the values of the predictor variables
+#' for which to calculate the partial residuals
+#'
+#' @return A tibble containing the predicted values, partial residuals,
+#' and estimated values with error for each observation in the grid.
+#'
+#' Thanks to Mattan S. Ben-Shachar
+#' https://gist.github.com/mattansb/b1f1e636286003b6c45353b2d2f7d1d7
+#'
+#' @importFrom marginaleffects predictions
+#' @importFrom dplyr as_tibble
+#'
+#' @export
+partial_residuals <- function(model, datagrid) {
+    data <- model$data
+    e <- residuals(model, summary = TRUE)[, "Estimate"]
+    grid <- match_grid(datagrid, data)
+    predictions <- marginaleffects::predictions(model,
+        newdata = grid,
+        type = "response", re_formula = NULL
+    )
+    predictions[["type"]] <- NULL
+    predictions[["estimate_with_error"]] <- predictions[["estimate"]] + e
+    predictions <- dplyr::as_tibble(predictions)
+    return(predictions)
+}
+
+
+#' Calculate average slopes
+#'
+#' This function calculates the average slopes for a given model and set of variables.
+#'
+#' @param model a fitted model object
+#' @param vars a character vector of variable names for which to calculate the average slopes
+#'
+#' @return A tibble containing the average slopes for each variable, along with the model name.
+#'
+#' @examples
+#' calc_avg_slopes(div_m_2, c("age", "education"))
+#'
+#' @importFrom marginaleffects avg_slopes posterior_draws
+#' @importFrom dplyr as_tibble
+#'
+#' @export
+calc_avg_slopes <- function(model, vars) {
+    model_mefs <- marginaleffects::avg_slopes(model,
+        type = "response",
+        variables = vars,
+        newdata = "mean",
+        ndraws = 1000,
+        re_formula = NULL
+    ) |>
+        marginaleffects::posterior_draws() |>
+        dplyr::as_tibble()
+
+    model_mefs[["model"]] <- deparse(substitute(model))
+    return(model_mefs)
+}
+
+
 
 #' Get spatial predictions from a model
 #'
@@ -211,10 +277,15 @@ get_spatial_preds <- function(model, data, resolution, ndraws, year = "all") {
 #'
 #' @export
 get_raster <- function(
-    preds, pop_contour, year = 2020, type = "estimate",
+    preds, pop_contour, year = NULL, type = "estimate",
     resolution = 50, fact = 2) {
-    mrast <- preds |>
-        dplyr::filter(year == !!year) |>
+    if (is.null(year)) {
+        filtered_preds <- preds
+    } else {
+        filtered_preds <- dplyr::filter(preds, year == !!year)
+    }
+
+    mrast <- filtered_preds |>
         dplyr::select(x, y, !!type) |>
         terra::rast(type = "xyz", crs = terra::crs(pop_contour)) |>
         terra::disagg(fact = fact, method = "bilinear") |>
