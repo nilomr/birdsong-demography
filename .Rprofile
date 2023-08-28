@@ -63,6 +63,9 @@ if (interactive()) {
   library(devtools)
 }
 
+# Margeffects
+options("marginaleffects_posterior_interval" = "hdi")
+
 options(vsc.rstudioapi = TRUE) # added by `renvsc`
 if (interactive() && Sys.getenv("TERM_PROGRAM") == "vscode") {
   if ("httpgd" %in% .packages(all.available = TRUE)) {
