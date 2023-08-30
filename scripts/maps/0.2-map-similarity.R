@@ -160,6 +160,7 @@ p <- patchwork::wrap_plots(plist, align = "v") +
 ggsave(
     file.path(config$path$figures, "nsm1_map.png"),
     device = svglite::svglite,
+    bg = "transparent",
     p,
     width = 10, height = 5, dpi = 300
 )
@@ -293,6 +294,7 @@ p <- patchwork::wrap_plots(plist, align = "v") +
 ggsave(
     file.path(config$path$figures, "nsm2_map.png"),
     device = svglite::svglite,
+    bg = "transparent",
     p,
     width = 10, height = 5, dpi = 300
 )
@@ -404,6 +406,7 @@ p <- patchwork::wrap_plots(plist, align = "v") +
 ggsave(
     file.path(config$path$figures, "nsm3_map.png"),
     device = svglite::svglite,
+    bg = "transparent",
     p,
     width = 10, height = 5, dpi = 300
 )

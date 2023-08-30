@@ -70,11 +70,15 @@ for (i in 1:4) {
 }
 
 # Combine plots using patchwork
-all <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]]
+nd <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] +
+    plot_annotation(tag_levels = "A") &
+    theme(plot.tag = element_text(size = 12, face = "bold"))
+
 
 ggsave(
     filename = file.path(config$path$figures, "supp_neighbour_data.svg"),
     plot = all,
+    bg = "transparent",
     width = 15,
     device = svglite::svglite,
     height = 13,
@@ -211,11 +215,15 @@ class_dist <- classinfo |>
     )
 
 
-fullfreqs <- freqplot + class_dist
+fullfreqs <- freqplot + class_dist +
+    plot_annotation(tag_levels = "A") &
+    theme(plot.tag = element_text(size = 12, face = "bold"))
+
 
 ggplot2::ggsave(
     filename = file.path(config$path$figures, "supp_song_frequencies.svg"),
     plot = fullfreqs,
+    bg = "transparent",
     device = svglite::svglite,
     width = 15,
     height = 9,
@@ -226,6 +234,10 @@ ggplot2::ggsave(
 
 
 # Plot 3: Measuring cultural diversity --------------------------------------
+
+neighbour_data <- read_csv_file(
+    file.path(config$path$derived_data, "neighbour_data.csv")
+)
 
 # plot n_current_songs vs n_unique_current_songs
 neighbour_data |>
@@ -296,11 +308,15 @@ p3 <- neighbour_data |>
     labs(x = "Number of Song Types", y = "Novelty")
 
 # Combine plots using patchwork
-all <- p1 + p2 + p3
+cultural_mets <- p1 + p2 + p3 +
+    plot_annotation(tag_levels = "A") &
+    theme(plot.tag = element_text(size = 12, face = "bold"))
+
 
 ggsave(
     filename = file.path(config$path$figures, "supp_cultural_mets.svg"),
-    plot = all,
+    plot = cultural_mets,
+    bg = "transparent",
     device = svglite::svglite,
     width = 17,
     height = 13,
@@ -352,6 +368,7 @@ kmc82 <- sharing_data |>
 ggsave(
     filename = file.path(config$path$figures, "supp_kmc82.svg"),
     plot = kmc82,
+    bg = "transparent",
     device = svglite::svglite,
     width = 8,
     height = 10,

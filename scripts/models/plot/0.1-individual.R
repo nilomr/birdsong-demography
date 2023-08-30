@@ -170,6 +170,7 @@ individual_mefs = individual_plot +
 ggsave(
     file.path(config$path$figures, "individual_all.svg"),
     individual_plot,
+    bg = "transparent",
     device = svglite::svglite,
-    width = 4.5, height = 4, dpi = 300, bg = "white"
+    width = 4.5, height = 4, dpi = 300
 )

@@ -193,6 +193,7 @@ vplot2022 <- ggplot() +
 ggsave(
     file.path(config$path$figures, "k=3_comms_2022.png"),
     plot = vplot2022,
+    bg = "transparent",
     device = svglite::svglite,
     width = 15,
     height = 10,
@@ -265,6 +266,7 @@ networkmap <- ggraph::ggraph(layout) +
 ggplot2::ggsave(
     file.path(config$path$figures, "map_communities.png"),
     device = svglite::svglite,
+    bg = "transparent",
     plot = networkmap,
     width = 6, height = 6, dpi = 300
 )

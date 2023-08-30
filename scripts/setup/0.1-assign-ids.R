@@ -362,6 +362,7 @@ both <- dist_dists + dispplot +
 ggsave(
     file.path(config$path$figures, "supp_acc_bird_distances.svg"),
     plot = both,
+    bg = "transparent",
     device = svglite::svglite,
     width = 16,
     height = 8,
