@@ -15,6 +15,7 @@ sharing_data <- read_csv_file(
     file.path(config$path$derived_data, "cont_pairwise_data.csv")
 ) |>
     dplyr::mutate(year = as.factor(year), year2 = as.factor(year2))
+
 main_data <- read_csv_file(
     file.path(config$path$derived_data, "main.csv")
 )
@@ -26,7 +27,6 @@ disp_m_1_data <- sharing_data |>
     dplyr::filter(father != father2) |>
     dplyr::filter(resident_status == "Both") |>
     dplyr::filter(!is.na(natal_distance), !is.na(dispersal_distance)) |>
-    dplyr::mutate(year_born_diff = as.numeric(year_born_diff)) |>
     dplyr::filter(!is.na(father), !is.na(father2))
 
 # Standardize the predictors
@@ -57,7 +57,5 @@ disp_m_1 <- brms::brm(
     threads = brms::threading(2),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "disp_m_1"),
-    file_refit = "on_change",
+    file_refit = "never",
 )
-
-plot(disp_m_1)

@@ -2,7 +2,7 @@
 
 config <- config::get()
 box::use(R / io[read_csv_file])
-box::use(R / rplot[titheme, titpalette, blues, yellows, reds])
+box::use(R / rplot[titheme, titpalette, blues, yellows, reds, persian])
 box::use(R / utils[
     og_scale, match_grid, get_spatial_preds,
     get_raster, partial_residuals, calc_avg_slopes
@@ -153,7 +153,6 @@ div_m_12_margeffs <- div_m_12_margeffs_mefs |>
     # set x axis limits to -0.03, 0.03
     scale_x_continuous(
         limits = c(-0.025, 0.03),
-        expand = c(0, 0),
         breaks = c(-0.03, -0.02, -0.01, 0, 0.01, 0.02)
     ) +
     labs(x = "Marginal Effect", y = "") +
@@ -163,7 +162,7 @@ div_m_12_margeffs <- div_m_12_margeffs_mefs |>
         legend.background = element_rect(fill = "transparent", color = NA),
         legend.box.background = element_rect(fill = "transparent", color = NA),
         legend.key = element_rect(fill = "transparent", color = NA),
-        legend.position = c(0.95, 0.95),
+        legend.position = c(0.999, 0.999),
         legend.justification = c(1, 1),
         legend.box.just = "right",
         aspect.ratio = 1,
@@ -185,8 +184,10 @@ div_m_1_disp <-
             y = estimate_with_error
         ),
         alpha = 0.5,
-        size = .3,
-        color = blues[2]
+        shape = 21,
+        fill = blues[2],
+        stroke = NA,
+        size = 1
     ) +
     ggdist::stat_lineribbon(
         .width = ppoints(levels), alpha = 1 / levels,
@@ -194,11 +195,9 @@ div_m_1_disp <-
     ) +
     guides(colour = "none") +
     scale_y_continuous(
-        expand = c(0, 0),
         breaks = c(0.63, 0.68, 0.73, 0.78, 0.83)
     ) +
     scale_x_continuous(
-        expand = c(0, 0),
         breaks = c(300, 900, 1500),
         labels = c("350m", "900m", "1500m")
     ) +
@@ -214,7 +213,7 @@ div_m_1_disp <-
         strip.text.x = element_blank()
     )
 
-# Thrid plot: predictions of the effect of age on diversity
+# Third plot: predictions of the effect of age on diversity
 
 div_m_2_age <-
     div_m_2_pred |>
@@ -225,8 +224,10 @@ div_m_2_age <-
             y = estimate_with_error
         ),
         alpha = 0.5,
-        size = .3,
-        color = reds[2]
+        shape = 21,
+        fill = reds[2],
+        stroke = NA,
+        size = 1
     ) +
     ggdist::stat_lineribbon(
         .width = ppoints(levels), alpha = 1 / levels,
@@ -234,11 +235,9 @@ div_m_2_age <-
     ) +
     guides(colour = "none") +
     scale_y_continuous(
-        expand = c(0, 0),
         breaks = c(0.56, 0.60, 0.64, 0.68, 0.72)
     ) +
     scale_x_continuous(
-        expand = c(0, 0),
         breaks = c(1, 1.5, 2, 2.5, 3),
         labels = c("1y", "1.5y", "2y", "2.5y", "3y")
     ) +
@@ -309,8 +308,8 @@ div_m_2_spat <- ggplot() +
     titheme() +
     guides(fill = guide_colorbar(
         ticks.colour = NA,
-        barwidth = 4,
-        barheight = .8,
+        barwidth = 3.5,
+        barheight = .6,
         # title below bar
         title.position = "top"
     )) +
@@ -323,14 +322,10 @@ div_m_2_spat <- ggplot() +
         aspect.ratio = NULL,
         axis.ticks = element_blank(),
         axis.text = element_blank(),
-        # remove all axis ticks and tick labels
-        legend.background = element_rect(fill = "transparent", color = NA),
-        legend.box.background = element_rect(fill = "transparent", color = NA),
-        legend.key = element_rect(fill = "transparent", color = NA),
         legend.position = c(0.95, 0.95),
         legend.text = element_text(size = 9),
-        # reduce legend tick text size
-
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
         legend.title = element_text(size = 10),
         legend.direction = "horizontal",
         legend.justification = c(1, 1),
@@ -347,11 +342,10 @@ diversity_all <- div_m_12_margeffs + div_m_1_disp + div_m_2_age + div_m_2_spat +
 
 ggsave(
     file.path(config$path$figures, "diversity_all.svg"),
+    device = svglite::svglite,
     diversity_all,
     width = 10, height = 4, dpi = 300, bg = "white"
 )
-
-
 
 
 # Fourth plot: sampling effect on diversity and novelty
@@ -392,6 +386,7 @@ div_m_3_plot <- div_m_3_mefs |>
 
 ggsave(
     file.path(config$path$figures, "supp_div_m_3_plot.svg"),
+    device = svglite::svglite,
     div_m_3_plot,
     width = 5, height = 3.5, dpi = 300, bg = "white"
 )

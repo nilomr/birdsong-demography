@@ -23,7 +23,6 @@ age_m_1_data <- sharing_data |>
     dplyr::filter(father != father2) |>
     dplyr::filter(resident_status == "Both") |>
     dplyr::filter(!is.na(natal_distance), !is.na(dispersal_distance)) |>
-    dplyr::mutate(year_born_diff = as.numeric(year_born_diff)) |>
     dplyr::filter(!is.na(father), !is.na(father2))
 
 # Standardize the predictors
@@ -54,7 +53,5 @@ age_m_1 <- brms::brm(
     threads = brms::threading(4),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "age_m_1"),
-    file_refit = "on_change",
+    file_refit = "never",
 )
-
-plot(age_m_1)

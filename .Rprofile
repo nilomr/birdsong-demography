@@ -41,9 +41,6 @@ if (interactive()) {
     cat("\n")
     utils::timestamp("", prefix = paste("##------ [", getwd(), "] ", sep = ""))
     cat("\nSuccessfully loaded .Rprofile at", base::date(), "\n")
-    cat("\n")
-    cat("For more information about this project template, go to:\n")
-    cat("https://github.com/startyourlab/r-project-template\n")
   }
 }
 
