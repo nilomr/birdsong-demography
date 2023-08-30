@@ -1,4 +1,3 @@
-
 # MODEL CHECKS ───────────────────────────────────────────────────────────── #
 
 
@@ -31,6 +30,7 @@ age_m_1_ppcheck <- brms::pp_check(age_m_1, type = "stat_2d", ndraws = 1000) +
 ggsave(
     file.path(config$path$figures, "age_m_1_ppcheck.png"),
     plot = age_m_1_ppcheck,
+    device = svglite::svglite,
     width = 10,
     height = 10,
     units = "cm",

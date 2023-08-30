@@ -155,7 +155,7 @@ match_grid <- function(grid, data) {
 #' @export
 partial_residuals <- function(model, datagrid) {
     data <- model$data
-    e <- residuals(model, summary = TRUE)[, "Estimate"]
+    e <- stats::residuals(model, summary = TRUE)[, "Estimate"]
     grid <- match_grid(datagrid, data)
     predictions <- marginaleffects::predictions(model,
         newdata = grid,

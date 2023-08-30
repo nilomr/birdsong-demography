@@ -23,6 +23,7 @@ fig1 <- age_effect + dispersal_effect + immigration_effect
 ggsave(
     file.path(config$path$figures, "fig1.svg"),
     plot = fig1,
+    device = svglite::svglite,
     width = 15,
     height = 18,
     units = "cm",

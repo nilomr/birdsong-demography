@@ -31,7 +31,7 @@ imm_m_1_data <- sharing_data |>
         resident2 = as.factor(resident2)
     ) |>
     dplyr::select(
-        mean_dist1, year, year2, year_born_diff, father, father2,
+        mean_dist1, year, year_born_diff, father, father2,
         resident_status, nest_distance
     )
 
@@ -61,5 +61,5 @@ imm_m_1 <- brms::brm(
     threads = brms::threading(2),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "imm_m_1"),
-    file_refit = "on_change",
+    file_refit = "never",
 )

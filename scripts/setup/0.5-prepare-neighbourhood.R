@@ -126,6 +126,7 @@ neigh_data <- main_data |>
     # remove where pnum is duplicated
     dplyr::distinct(pnum, .keep_all = TRUE)
 
+gc()
 
 # Prepare data in longer format (I miss python so much)
 neigh_data_filtered <- neigh_data |>

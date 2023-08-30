@@ -70,7 +70,7 @@ div_m_1 <- brms::brm(
     backend = "cmdstanr",
     control = list(adapt_delta = 0.9),
     file = file.path(config$path$fits, "div_m_1"),
-    file_refit = "on_change",
+    file_refit = "never",
 )
 
 # On cultural diversity
@@ -94,7 +94,7 @@ div_m_2 <- brms::brm(
     backend = "cmdstanr",
     control = list(adapt_delta = 0.9),
     file = file.path(config$path$fits, "div_m_2"),
-    file_refit = "on_change",
+    file_refit = "never",
 )
 
 
@@ -120,7 +120,7 @@ div_m_3 <- brms::brm(
     threads = brms::threading(2),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "div_m_3"),
-    file_refit = "on_change",
+    file_refit = "never",
 )
 
 # Diversity and novelty not controlling for sampling effect
@@ -142,5 +142,5 @@ div_m_3.1 <- brms::brm(
     threads = brms::threading(2),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "div_m_3.1"),
-    file_refit = "on_change",
+    file_refit = "never",
 )

@@ -62,7 +62,7 @@ nsm3 <- brms::brm(
     threads = brms::threading(4),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "nsm3"),
-    file_refit = "on_change",
+    file_refit = "never",
 )
 
 
@@ -140,6 +140,7 @@ p <- patchwork::wrap_plots(plist, align = "v") +
 
 ggsave(
     file.path(config$path$figures, "nsm3_map.png"),
+    device = svglite::svglite,
     p,
     width = 10, height = 5, dpi = 300
 )

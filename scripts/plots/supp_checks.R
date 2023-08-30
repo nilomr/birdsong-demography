@@ -70,12 +70,13 @@ for (i in 1:4) {
 }
 
 # Combine plots using patchwork
-all = plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]]
+all <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]]
 
 ggsave(
     filename = file.path(config$path$figures, "supp_neighbour_data.svg"),
     plot = all,
     width = 15,
+    device = svglite::svglite,
     height = 13,
     units = "cm",
     dpi = 300
@@ -210,11 +211,12 @@ class_dist <- classinfo |>
     )
 
 
-fullfreqs = freqplot + class_dist
+fullfreqs <- freqplot + class_dist
 
 ggplot2::ggsave(
     filename = file.path(config$path$figures, "supp_song_frequencies.svg"),
     plot = fullfreqs,
+    device = svglite::svglite,
     width = 15,
     height = 9,
     units = "cm",
@@ -223,13 +225,7 @@ ggplot2::ggsave(
 
 
 
-
-
-
-
 # Plot 3: Measuring cultural diversity --------------------------------------
-
-
 
 # plot n_current_songs vs n_unique_current_songs
 neighbour_data |>
@@ -305,8 +301,60 @@ all <- p1 + p2 + p3
 ggsave(
     filename = file.path(config$path$figures, "supp_cultural_mets.svg"),
     plot = all,
+    device = svglite::svglite,
     width = 17,
     height = 13,
+    units = "cm",
+    dpi = 300
+)
+
+
+
+
+# from sharing data subset all distances <500 and bin them into 100m bins, then plot the mean and SE for each bin
+# (this is an awful way to do this, just recreating the McGregor and Krebs 1982 plot)
+
+
+
+kmc82 <- sharing_data |>
+    dplyr::filter(year == year2) |>
+    dplyr::filter(nest_distance < 500) |>
+    # remove rows where pnum  and pnum2 are the same but in reverse order
+    dplyr::filter(pnum < pnum2) |>
+    dplyr::mutate(nest_distance_bin = cut(nest_distance, breaks = seq(0, 500, 100))) |>
+    dplyr::group_by(nest_distance_bin) |>
+    dplyr::summarize(
+        mean_dist = mean((mean_dist1 + mean_dist2) / 2),
+        se = stats::sd((mean_dist1 + mean_dist2) / 2) / sqrt(dplyr::n())
+    ) |>
+    dplyr::filter(!is.na(nest_distance_bin)) |>
+    ggplot2::ggplot(ggplot2::aes(x = nest_distance_bin, y = mean_dist)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = mean_dist - se, ymax = mean_dist + se), width = .05) +
+    ggplot2::labs(x = "Distance between nestboxes (m)", y = "Average acoustic similarity") +
+    # remove grid lines and only leave left and bottom axis lines
+    ggplot2::theme(
+        panel.grid.major = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank(),
+        panel.background = ggplot2::element_blank(),
+        axis.line = ggplot2::element_line(colour = "black"),
+        axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 5)),
+        axis.text.y = ggplot2::element_text(margin = ggplot2::margin(r = 5)),
+        # add space between axis title and axis labels
+        axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+        axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 10))
+    ) +
+    # change x axis labels to 100, 200, 300, 400, 500
+    ggplot2::scale_x_discrete(
+        labels = c("100", "200", "300", "400", "500")
+    )
+
+ggsave(
+    filename = file.path(config$path$figures, "supp_kmc82.svg"),
+    plot = kmc82,
+    device = svglite::svglite,
+    width = 8,
+    height = 10,
     units = "cm",
     dpi = 300
 )

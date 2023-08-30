@@ -59,10 +59,14 @@ sharing_data <- sharing_data |>
 # add the data from main_data to sharing_data, matching pnum to pnum and pnum2 to pnum:
 sharing_data <- sharing_data |>
     dplyr::select(-c(year, nestbox)) |>
-    dplyr::left_join(main_data, by = c("pnum" = "pnum")) |>
+    dplyr::left_join(main_data,
+        by = c("pnum" = "pnum"),
+        relationship = "many-to-many"
+    ) |>
     dplyr::left_join(main_data,
         by = c("pnum2" = "pnum"),
-        suffix = c("", "2")
+        suffix = c("", "2"),
+        relationship = "many-to-many"
     )
 
 # add the distance between natal boxes

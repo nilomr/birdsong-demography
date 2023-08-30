@@ -355,11 +355,14 @@ dispplot <- main_data |>
     labs(x = "Distance (m)", y = "Density")
 
 
-both <- dist_dists + dispplot
+both <- dist_dists + dispplot +
+    plot_annotation(tag_levels = "A") &
+    theme(plot.tag = element_text(size = 12, face = "bold"))
 
 ggsave(
     file.path(config$path$figures, "supp_acc_bird_distances.svg"),
     plot = both,
+    device = svglite::svglite,
     width = 16,
     height = 8,
     units = "cm",

@@ -49,7 +49,6 @@ class_label_freq <- manual_labels |>
         class_freq = n_year / year_type_count,
     ) |>
     dplyr::arrange(desc(n_year)) |>
-    # for each pnum count how many class_label it has with n_year <3
     dplyr::group_by(pnum) |>
     dplyr::mutate(
         rare_n = sum(n_year < 4),
@@ -85,17 +84,5 @@ main_data |>
     readr::write_csv(
         file.path(config$path$derived_data, "main.csv")
     )
-
-
-# calculate mean and sd for rare_n to compare with McGregor & Krebs 1982
-main_data |>
-    # get where nestbox starts with B
-    dplyr::group_by(resident) |>
-    dplyr::summarise(
-        mean = mean(rare_n, na.rm = T),
-        sd = sd(rare_n, na.rm = T)
-    )
-
-
 
 # END
