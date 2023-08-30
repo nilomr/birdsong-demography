@@ -20,7 +20,7 @@
 
 This repository includes the following main features,
 
-- An RStudio project [`template.Rproj`](./template.Rproj)
+- An RStudio project [`birdsong-demography.Rproj`](./birdsong-demography.Rproj)
 - Package dependency management using [`renv`](https://github.com/rstudio/renv/)
 - Configuration using [`config`](https://github.com/rstudio/config)
 - A [`scripts`](./scripts) directory with the code necessary to reproduce the analysis and figures in this paper.
