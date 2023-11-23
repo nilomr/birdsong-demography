@@ -15,6 +15,17 @@ age_m_1 <- readRDS(file.path(config$path$fits, "age_m_1.rds"))
 disp_m_1 <- readRDS(file.path(config$path$fits, "disp_m_1.rds"))
 imm_m_1 <- readRDS(file.path(config$path$fits, "imm_m_1.rds"))
 
+# Repertoire size and novelty
+rep_m_1 <- readRDS(file.path(config$path$fits, "rep_m_1.rds"))
+rep_m_2 <- readRDS(file.path(config$path$fits, "rep_m_2.rds"))
+rep_m_1.1 <- readRDS(file.path(config$path$fits, "rep_m_1.1.rds"))
+rep_m_2.1 <- readRDS(file.path(config$path$fits, "rep_m_2.1.rds"))
+
+
+# Diversity
+div_data <- readRDS(file.path(config$path$fits, "div_data.rds"))
+nov_m_1 <- readRDS(file.path(config$path$fits, "nov_m_1.rds"))
+div_m_1 <- readRDS(file.path(config$path$fits, "div_m_1.rds"))
 
 # Turnover
 turn_m_1 <- readRDS(file.path(config$path$fits, "turn_m_1.rds"))
@@ -29,16 +40,65 @@ print(brms::hypothesis(
 )$hypothesis, digits = 2)
 
 
-# Effect of territorial distance // best get this from separate model, although
-# estimate is very close
-print(brms::hypothesis(
-    disp_m_1,
-    "nest_distance  < 0"
-)$hypothesis, digits = 1)
 
 
-# Is the repertoire of immigrants larger?
+# ──── REPERTOIRE SIZE AND NOVELTY AT THE INDIVIDUAL LEVEL ────────────────────
+
+# Does dispersal reduce the size of a bird's repertoire?
+print(brms::hypothesis(rep_m_1.1, "dispersal_distance < 0")$hypothesis, digits = 2)
+
+# Does dispersal reduce the novelty of a bird's repertoire,
+# adjusting for repertoire size?
+print(brms::hypothesis(rep_m_2.1, "- dispersal_distance < 0")$hypothesis, digits = 2)
+
+# Does immigration increase the size of a bird's repertoire?
 print(brms::hypothesis(rep_m_1, "immigrantTRUE > 0")$hypothesis, digits = 2)
+
+# Does immigration increase the novelty of a bird's repertoire,
+# adjusting for repertoire size?
+print(brms::hypothesis(rep_m_2, "immigrantTRUE > 0")$hypothesis, digits = 2)
+
+
+# ──── DIVERSITY ──────────────────────────────────────────────────────────────
+
+
+# Novelty
+print(brms::hypothesis(nov_m_1, "mean_dispersal_distance < 0")$hypothesis, digits = 2)
+
+marginaleffects::avg_slopes(nov_m_1, re_formula = NULL, ndraws = 1000, type = "response") |> dplyr::mutate_if(is.numeric, round, 3)
+
+
+
+# How much is 1 SD in the original scale?
+og_scale(div_data, dplyr::tibble(mean_age = 1), v = "mean_age")
+
+mu <- mean(div_data$mean_age)
+sigma <- sd(div_data$mean_age)
+
+v <- numeric(2)
+for (i in c(min(div_data$mean_age), min(div_data$mean_age) + sigma)) {
+    x <- i
+    z <- (x - mu) / sigma
+    v[i / 100 + 1] <- z
+}
+
+abs(v[1] - v[2])
+
+# odds-ratio-scale posterior
+marginaleffects::avg_comparisons(
+    div_m_1,
+    re_formula = NULL, ndraws = 2000,
+    variable = "mean_age",
+    type = "link"
+) |>
+    marginaleffects::posteriordraws() |>
+    dplyr::mutate(draw = exp(draw) - 1) |>
+    ggplot(aes(x = draw)) +
+    ggdist::stat_halfeye() +
+    geom_vline(xintercept = 0) +
+    scale_x_continuous(labels = scales::label_percent()) +
+    labs(x = "Percent change in outcome", y = "Density") +
+    titheme()
 
 
 
@@ -90,20 +150,3 @@ prop_shared_df <- data.frame(year = unique(main_data$year), prop_shared = prop_s
 
 # Marginal estimate for the effect of individual turnover
 print(brms::hypothesis(turn_m_1, "prop_same_birds = 0")$hypothesis, digits = 2)
-
-
-# Hypothesis test that immigrant birds are more dissimilar than resident birds
-# when birds are in the same area and are one year apart
-hy1m1 <- marginaleffects::predictions(
-    imm_m_1,
-    newdata = marginaleffects::datagrid(
-        nest_distance = min(imm_m_1_data_std$nest_distance),
-        resident_status = unique(imm_m_1_data_std$resident_status),
-        year_born_diff = "1",
-        year = "2020"
-    )
-) |>
-    marginaleffects::posterior_draws(shape = "DxP") |>
-    brms::hypothesis("b3 - b1 < 0")
-
-print(hy1m1$hypothesis, digits = 2)
