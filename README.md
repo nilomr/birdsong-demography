@@ -1,17 +1,20 @@
 
 ![Title Badge](https://img.shields.io/badge/Bird_Song_Culture_%26_Demography-k?style=for-the-badge&labelColor=d99c2b&color=d99c2b) ![R Badge](https://img.shields.io/badge/v4.2-4295B3?style=for-the-badge&logo=r&logoColor=white)
 
-<!-- add a table of contents here -->
+
+![Study site](output/rmimg.jpg)
+
 ## Table of Contents
 
-- [About](#about)
+- [Table of Contents](#table-of-contents)
 - [This Repository](#this-repository)
+  - [Project Organization](#project-organization)
 - [Getting Started](#getting-started)
   - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [Running the analyses](#running-the-analyses)
-    - [Models](#models)
-    - [Figures and model output](#figures-and-model-output)
+  - [Models](#models)
+  - [Figures and model output](#figures-and-model-output)
 - [Bugs and Issues](#bugs-and-issues)
 
 
