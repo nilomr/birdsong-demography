@@ -1,17 +1,18 @@
-# Model relationship between movement and repertoire commonness.
+"""
+This code simulates the relationship between bird movement and the commonness
+of songs in their repertoires. The simulation involves a population of 200
+birds in a 1500m x 1500m square, each capable of singing 4 songs selected from
+a pool of 100. The frequency of songs in a bird's repertoire follows an
+exponential distribution with a mean of 100. Birds do not initially move
+New birds are born and move based on a lognormal distribution parametrised to
+represent realistic dispersal behaviour. Each bird collects songs it hears
+within a 100m radius as it moves. At the end of their movement, a bird's
+repertoire is determined by the four songs it heard most frequently. The
+simulation is repeated 1000 times, and the average frequency of songs in each
+bird's repertoire and the distance each bird has moved are recorded.
+"""
 
-
-# There are 50 birds in space, in a 1000m x 1000m square. Each sings 4 songs,
-# each drawn from a pool of 100 songs. Some songs are more common in the bird's repertoires than others, drawn from an exponential distribution with mean 100.
-# Each bird sings all songs in its repertoire equally often. These birds do not move.
-
-# New birds are born and move. How much they move is determined by a lognormal with mu = 6.119 and stdev = 0.436
-
-# Each new bird collects each song it hears within a 100 m radius as it moves.
-
-# At the end of the movement, it ends up with a repertoire of the four songs it has heard most often.
-# We save the average frequency of the songs in a bird's repertoire in the population, as well as how far a bird has moved.
-
+# ──── IMPORTS ────────────────────────────────────────────────────────────────
 
 from collections import Counter
 
@@ -22,39 +23,35 @@ import seaborn as sns
 from scipy.stats import expon, lognorm
 from tqdm import tqdm
 
+# ──── SETTINGS ───────────────────────────────────────────────────────────────
+
 # Initialize parameters
-num_birds = 100
+num_birds = 200
 num_songs = 100
 song_freq = expon.rvs(scale=100, size=num_songs)
 song_freq = song_freq / song_freq.sum()
-space_dim = 1000
-song_radius = 150
+space_dim = 1500
+song_radius = 200
 num_repertoire = 4
 
-# Dispersal parameters
+# set numpy seed
+np.random.seed(42)
+
+# Dispersal parameters (approximates empirical dispersal distribution)
 dispersal_mu = 6.119
 dispersal_sigma = 0.436
 
-# Initialize bird locations and songs
-birds = [
-    {
-        "x": np.random.uniform(0, space_dim),
-        "y": np.random.uniform(0, space_dim),
-        "repertoire": np.random.choice(num_songs, num_repertoire, p=song_freq),
-    }
-    for _ in range(num_birds)
-]
+
+# ──── FUNCTION DEFINITIONS ───────────────────────────────────────────────────
 
 
-# Euclidean distance
 def distance(x1, y1, x2, y2):
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
 # Function to simulate bird movement and song learning
 def simulate_bird(start_x, start_y, end_x, end_y):
-    # Calculate the number of steps based on the distance between the starting
-    # and ending coordinates
+    # Calculate the distance moved
     distance_moved = distance(start_x, start_y, end_x, end_y)
     n_steps = 10
 
@@ -88,12 +85,25 @@ def simulate_bird(start_x, start_y, end_x, end_y):
         song
         for song, _ in Counter(
             [song for songs in all_songs for song in songs]
-        ).most_common(4)
+        ).most_common(num_repertoire)
     ]
 
     return {"repertoire": total_repertoire, "distance_moved": distance_moved}
 
 
+# ──── MAIN ───────────────────────────────────────────────────────────────────
+
+# Initialize bird locations and songs
+birds = [
+    {
+        "x": np.random.uniform(0, space_dim),
+        "y": np.random.uniform(0, space_dim),
+        "repertoire": np.random.choice(num_songs, num_repertoire, p=song_freq),
+    }
+    for _ in range(num_birds)
+]
+
+# Simulate bird movement and song learning
 all_sims = []
 for i in tqdm(range(1000)):
     start_x = np.random.uniform(0, space_dim)
@@ -110,6 +120,8 @@ all_sims = [bird for sim in all_sims for bird in sim]
 avg_freqs = np.array([song_freq[bird["repertoire"]].mean() for bird in all_sims])
 dists = np.array([bird["distance_moved"] for bird in all_sims])
 
+# ──── PLOT RESULTS ───────────────────────────────────────────────────────────
+
 
 # plot the average frequency of the songs in a bird's repertoire in the
 # population against how far a bird has moved
@@ -117,6 +129,7 @@ dists = np.array([bird["distance_moved"] for bird in all_sims])
 # prepare data as dataframe for seaborn
 data = {"distance_moved": dists, "avg_freq": avg_freqs}
 data = pd.DataFrame(data)
+data = data[data["distance_moved"] <= 1500]
 
 sns.regplot(
     x="distance_moved", y="avg_freq", data=data, scatter_kws=dict(s=1, alpha=0.5)
@@ -124,3 +137,7 @@ sns.regplot(
 plt.xlabel("Distance moved")
 plt.ylabel("Average frequency of songs in repertoire")
 plt.show()
+
+# calculate pearson correlation coefficient:
+pearson_corr = data["distance_moved"].corr(data["avg_freq"], method="pearson")
+print("r =", f"{pearson_corr:.2f}")
