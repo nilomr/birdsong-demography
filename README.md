@@ -112,16 +112,14 @@ Any scripts outside of the `./scripts/setup` and  `./scripts/models/fit` folders
 
 ## Bugs and Issues
 
-If you encounter any bugs or issues, please [open an issue](https://github.com/nilomr/birdsong-demography/issues/new/choose). 
+If you encounter any bugs or issues, please [open an issue](https://github.com/nilomr/birdsong-demography/issues/new/choose). If possible, include a minimal reproducible example and/or screenshots to illustrate the problem.
 
 
 <br>
 
-#
 [^1]: Data are under version control here, but obtaining these requires `git-lfs` to be installed on your computer and I can't guarantee that it will work.
 
 <sub>
-This repository uses a template by https://www.startyourlab.com.
 <br>© Nilo M. Recalde, 2023
 </sub>
 
