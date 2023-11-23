@@ -3,10 +3,9 @@
 config <- config::get()
 box::use(R / io[read_csv_file])
 box::use(R / rplot[titheme, titpalette, reds, blues, yellows])
-box::use(R / utils[og_scale, match_grid])
+box::use(R / utils[og_scale, match_grid, partial_residuals])
 box::use(patchwork[...])
 box::use(ggplot2[...])
-
 
 # ──── LOAD DATA ──────────────────────────────────────────────────────────────
 
@@ -14,25 +13,6 @@ box::use(ggplot2[...])
 age_m_1 <- readRDS(file.path(config$path$fits, "age_m_1.rds"))
 disp_m_1 <- readRDS(file.path(config$path$fits, "disp_m_1.rds"))
 imm_m_1 <- readRDS(file.path(config$path$fits, "imm_m_1.rds"))
-
-
-# ──── MARGINAL EFFECT OF AGE DIFFERENCE ──────────────────────────────────────
-
-age_m_1_draws <- marginaleffects::avg_slopes(age_m_1,
-    variables = "year_born_diff",
-    type = "response",
-    re_formula = NULL,
-    newdata = marginaleffects::datagrid(
-        year_born_diff = c("0", "1", "2", "3", "4+"),
-        nest_distance = mean(age_m_1$data$nest_distance),
-        natal_distance =
-            mean(age_m_1$data$natal_distance)
-    )
-) |>
-    marginaleffects::posterior_draws() |>
-    dplyr::as_tibble() |>
-    dplyr::mutate(term = contrast)
-
 
 
 # MARGINAL EFFECT OF NATAL AND TERRITORY DISTANCE ────────────────────────── #
@@ -43,7 +23,7 @@ disp_m_1_draws1 <- marginaleffects::avg_slopes(disp_m_1,
     type = "response",
     re_formula = NULL,
     newdata = marginaleffects::datagrid(
-        nest_distance = min(disp_m_1$data$nest_distance)
+        nest_distance = mean(disp_m_1$data$nest_distance)
     )
 ) |>
     marginaleffects::posterior_draws() |>
@@ -54,7 +34,7 @@ disp_m_1_draws2 <- marginaleffects::avg_slopes(disp_m_1,
     type = "response",
     re_formula = NULL,
     newdata = marginaleffects::datagrid(
-        natal_distance = min(disp_m_1$data$natal_distance)
+        natal_distance = mean(disp_m_1$data$natal_distance)
     )
 ) |>
     marginaleffects::posterior_draws() |>
@@ -87,6 +67,27 @@ imm_m_1_draws <- marginaleffects::avg_slopes(imm_m_1,
     dplyr::mutate(term = contrast)
 
 
+# ──── MARGINAL EFFECT OF AGE DIFFERENCE ──────────────────────────────────────
+
+age_m_1_draws <- marginaleffects::avg_slopes(age_m_1,
+    variables = "year_born_diff",
+    type = "response",
+    re_formula = NULL,
+    newdata = marginaleffects::datagrid(
+        year_born_diff = c("0", "1", "2", "3", "4+"),
+        nest_distance = mean(age_m_1$data$nest_distance),
+        natal_distance =
+            mean(age_m_1$data$natal_distance)
+    )
+) |>
+    marginaleffects::posterior_draws() |>
+    dplyr::as_tibble() |>
+    dplyr::mutate(term = contrast)
+
+
+
+# ──── JOIN AND PLOT ─────────────────────────────────────────────────────────
+
 # bind all the data rogether, indicating which model it came from
 disp_m_1_draws <- disp_m_1_draws |>
     dplyr::mutate(model = "disp_m_1")
@@ -104,11 +105,6 @@ all_draws <- dplyr::bind_rows(
 )
 
 
-# unique(all_draws$term)
-# [1] "natal_distance" "nest_distance"  "1 - 0"          "2 - 0"
-# [5] "3 - 0"          "4+ - 0"         "Neither - Both" "One - Both"
-
-
 fill_colors <- c(
     "natal_distance" = blues[1],
     "nest_distance" = blues[2],
@@ -120,7 +116,7 @@ fill_colors <- c(
     "One - Both" = yellows[2]
 )
 
-individual_mefs <- plot <-
+individual_plot <- plot <-
     all_draws |>
     ggplot(aes(x = draw, y = model, fill = term, color = term)) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
@@ -148,9 +144,9 @@ individual_mefs <- plot <-
     ) +
     # set x axis limits to -0.03, 0.03
     scale_x_continuous(
-        limits = c(-0.02, 0.005),
+        limits = c(-0.017, 0.007),
         expand = c(0, 0),
-        breaks = c(-0.03, -0.02, -0.01, 0, 0.01, 0.02)
+        breaks = c(-0.03, -0.02, -0.015, -0.01, -0.005, 0, 0.005, 0.01, 0.02)
     ) +
     labs(x = "Marginal Effect", y = "") +
     guides(color = "none") +
@@ -163,7 +159,7 @@ individual_mefs <- plot <-
         legend.spacing.y = unit(.2, "cm")
     )
 
-individual_mefs = individual_plot +
+individual_mefs <- individual_plot +
     plot_annotation(tag_levels = "A") &
     theme(plot.tag = element_text(size = 12, face = "bold"))
 
@@ -172,5 +168,5 @@ ggsave(
     individual_plot,
     bg = "transparent",
     device = svglite::svglite,
-    width = 4.5, height = 4, dpi = 300
+    width = 5, height = 4, dpi = 300
 )

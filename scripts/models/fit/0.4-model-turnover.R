@@ -98,39 +98,17 @@ turn_m_1 <- brms::brm(
 )
 
 
-# Age vs cultural turnover, controlling for individual turnover
-turn_f_2 <- brms::bf(
-    prop_shared ~ 0 + mean_age + prop_same_birds + year +
-        gp(x, y, by = year, k = 25, c = 5 / 4),
-    hu ~ mean_age
-)
-
-turn_m_2 <- brms::brm(
-    turn_f_2,
-    data = turn_data_std,
-    family = brms::hurdle_lognormal(),
-    iter = 1000,
-    warmup = 500,
-    chains = 4,
-    cores = 4,
-    seed = 42,
-    threads = brms::threading(2),
-    backend = "cmdstanr",
-    file = file.path(config$path$fits, "turn_m_2"),
-    file_refit = "never",
-)
-
 
 # Full model
-turn_f_3 <- brms::bf(
+turn_f_2 <- brms::bf(
     prop_shared ~ 0 + prop_immigrant + mean_dispersal_distance + mean_age +
         prop_same_birds + year +
         gp(x, y, by = year, k = 25, c = 5 / 4),
     hu ~ 1
 )
 
-turn_m_3 <- brms::brm(
-    turn_f_3,
+turn_m_2 <- brms::brm(
+    turn_f_2,
     data = turn_data_std,
     family = brms::hurdle_lognormal(),
     iter = 1500,
@@ -141,6 +119,6 @@ turn_m_3 <- brms::brm(
     threads = brms::threading(2),
     control = list(adapt_delta = 0.95),
     backend = "cmdstanr",
-    file = file.path(config$path$fits, "turn_m_3"),
+    file = file.path(config$path$fits, "turn_m_2"),
     file_refit = "never",
 )

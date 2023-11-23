@@ -18,7 +18,7 @@ levels <- 30 # increase for final plots
 
 turn_data <- readRDS(file.path(config$path$fits, "turn_data.rds"))
 turn_m_1 <- readRDS(file.path(config$path$fits, "turn_m_1.rds"))
-turn_m_3 <- readRDS(file.path(config$path$fits, "turn_m_3.rds"))
+turn_m_2 <- readRDS(file.path(config$path$fits, "turn_m_2.rds"))
 
 
 # PREPARE THE DATA ───────────────────────────────────────────────────────── #
@@ -32,8 +32,8 @@ vars <- c(
     "prop_same_birds"
 )
 
-turn_m_3_margeffs <-
-    calc_avg_slopes(turn_m_3, vars) |>
+turn_m_2_margeffs <-
+    calc_avg_slopes(turn_m_2, vars) |>
     mutate(draw = ifelse(term == "prop_same_birds", draw, -draw))
 
 
@@ -41,29 +41,29 @@ turn_m_3_margeffs <-
 
 # Calculate predictions for minimum values
 min_values <- marginaleffects::datagrid(
-    model = turn_m_3,
-    prop_immigrant = min(turn_m_3$data$prop_immigrant),
-    mean_dispersal_distance = min(turn_m_3$data$mean_dispersal_distance),
-    mean_age = min(turn_m_3$data$mean_age),
-    prop_same_birds = mean(turn_m_3$data$prop_same_birds)
+    model = turn_m_2,
+    prop_immigrant = min(turn_m_2$data$prop_immigrant),
+    mean_dispersal_distance = min(turn_m_2$data$mean_dispersal_distance),
+    mean_age = min(turn_m_2$data$mean_age),
+    prop_same_birds = mean(turn_m_2$data$prop_same_birds)
 )
-turn_m_3_cft_mi <- marginaleffects::predictions(turn_m_3, newdata = min_values)
+turn_m_2_cft_mi <- marginaleffects::predictions(turn_m_2, newdata = min_values)
 
 # Calculate predictions for maximum values
 max_values <- marginaleffects::datagrid(
-    model = turn_m_3,
-    prop_immigrant = max(turn_m_3$data$prop_immigrant),
-    mean_dispersal_distance = max(turn_m_3$data$mean_dispersal_distance),
-    mean_age = max(turn_m_3$data$mean_age),
-    prop_same_birds = mean(turn_m_3$data$prop_same_birds)
+    model = turn_m_2,
+    prop_immigrant = max(turn_m_2$data$prop_immigrant),
+    mean_dispersal_distance = max(turn_m_2$data$mean_dispersal_distance),
+    mean_age = max(turn_m_2$data$mean_age),
+    prop_same_birds = mean(turn_m_2$data$prop_same_birds)
 )
-turn_m_3_cft_ma <- marginaleffects::predictions(turn_m_3, newdata = max_values)
+turn_m_2_cft_ma <- marginaleffects::predictions(turn_m_2, newdata = max_values)
 
 # Combine and process predictions
-turn_m_3_cft <- bind_rows(
-    turn_m_3_cft_mi |> marginaleffects::posterior_draws() |>
+turn_m_2_cft <- bind_rows(
+    turn_m_2_cft_mi |> marginaleffects::posterior_draws() |>
         mutate(condition = "min"),
-    turn_m_3_cft_ma |>
+    turn_m_2_cft_ma |>
         marginaleffects::posterior_draws() |>
         mutate(condition = "max")
 ) |>
@@ -71,9 +71,9 @@ turn_m_3_cft <- bind_rows(
 
 
 # get estimates
-turn_m_3_cft_mi |>
+turn_m_2_cft_mi |>
     as_tibble() |>
-    bind_rows(as_tibble(turn_m_3_cft_ma)) |>
+    bind_rows(as_tibble(turn_m_2_cft_ma)) |>
     # round to two decimal places
     mutate_at(
         vars(estimate, conf.low, conf.high),
@@ -84,23 +84,23 @@ turn_m_3_cft_mi |>
 
 # calculate predictions and partial residuals for our variables of interest
 
-# Effect of dispersal distance on cultural turnover (turn_m_3)
+# Effect of dispersal distance on cultural turnover (turn_m_2)
 
-turn_m_3_gr_dis <- marginaleffects::datagrid(
-    model = turn_m_3,
-    mean_dispersal_distance = turn_m_3$data$mean_dispersal_distance
+turn_m_2_gr_dis <- marginaleffects::datagrid(
+    model = turn_m_2,
+    mean_dispersal_distance = turn_m_2$data$mean_dispersal_distance
 )
 
-turn_m_3_gr_dis_2 <- partial_residuals(turn_m_3, turn_m_3_gr_dis)
+turn_m_2_gr_dis_2 <- partial_residuals(turn_m_2, turn_m_2_gr_dis)
 
-turn_m_3_pred_dis <- marginaleffects::predictions(turn_m_3,
+turn_m_2_pred_dis <- marginaleffects::predictions(turn_m_2,
     type = "response",
     re_formula = NULL,
     ndraws = 1000,
     newdata = marginaleffects::datagrid(
         mean_dispersal_distance = seq(
-            min(turn_m_3$data$mean_dispersal_distance),
-            max(turn_m_3$data$mean_dispersal_distance),
+            min(turn_m_2$data$mean_dispersal_distance),
+            max(turn_m_2$data$mean_dispersal_distance),
             by = 0.1
         )
     )
@@ -108,28 +108,28 @@ turn_m_3_pred_dis <- marginaleffects::predictions(turn_m_3,
     marginaleffects::posterior_draws()
 
 # convert estimates back to the original scale
-turn_m_3_gr_dis_2 <- og_scale(turn_data, turn_m_3_gr_dis_2, v = "mean_dispersal_distance")
-turn_m_3_pred_dis <- og_scale(turn_data, turn_m_3_pred_dis, v = "mean_dispersal_distance")
+turn_m_2_gr_dis_2 <- og_scale(turn_data, turn_m_2_gr_dis_2, v = "mean_dispersal_distance")
+turn_m_2_pred_dis <- og_scale(turn_data, turn_m_2_pred_dis, v = "mean_dispersal_distance")
 
 
 
-# Effect of immigration on cultural turnover (turn_m_3)
+# Effect of immigration on cultural turnover (turn_m_2)
 
-turn_m_3_gr_imm <- marginaleffects::datagrid(
-    model = turn_m_3,
-    prop_immigrant = turn_m_3$data$prop_immigrant
+turn_m_2_gr_imm <- marginaleffects::datagrid(
+    model = turn_m_2,
+    prop_immigrant = turn_m_2$data$prop_immigrant
 )
 
-turn_m_3_gr_imm_2 <- partial_residuals(turn_m_3, turn_m_3_gr_imm)
+turn_m_2_gr_imm_2 <- partial_residuals(turn_m_2, turn_m_2_gr_imm)
 
-turn_m_3_pred_imm <- marginaleffects::predictions(turn_m_3,
+turn_m_2_pred_imm <- marginaleffects::predictions(turn_m_2,
     type = "response",
     re_formula = NULL,
     ndraws = 1000,
     newdata = marginaleffects::datagrid(
         prop_immigrant = seq(
-            min(turn_m_3$data$prop_immigrant),
-            max(turn_m_3$data$prop_immigrant),
+            min(turn_m_2$data$prop_immigrant),
+            max(turn_m_2$data$prop_immigrant),
             by = 0.1
         )
     )
@@ -137,27 +137,27 @@ turn_m_3_pred_imm <- marginaleffects::predictions(turn_m_3,
     marginaleffects::posterior_draws()
 
 # convert estimates back to the original scale
-turn_m_3_gr_imm_2 <- og_scale(turn_data, turn_m_3_gr_imm_2, v = "prop_immigrant")
-turn_m_3_pred_imm <- og_scale(turn_data, turn_m_3_pred_imm, v = "prop_immigrant")
+turn_m_2_gr_imm_2 <- og_scale(turn_data, turn_m_2_gr_imm_2, v = "prop_immigrant")
+turn_m_2_pred_imm <- og_scale(turn_data, turn_m_2_pred_imm, v = "prop_immigrant")
 
 
-# Effect of age on cultural turnover (turn_m_3)
+# Effect of age on cultural turnover (turn_m_2)
 
-turn_m_3_gr_age <- marginaleffects::datagrid(
-    model = turn_m_3,
-    mean_age = turn_m_3$data$mean_age
+turn_m_2_gr_age <- marginaleffects::datagrid(
+    model = turn_m_2,
+    mean_age = turn_m_2$data$mean_age
 )
 
-turn_m_3_gr_age_2 <- partial_residuals(turn_m_3, turn_m_3_gr_age)
+turn_m_2_gr_age_2 <- partial_residuals(turn_m_2, turn_m_2_gr_age)
 
-turn_m_3_pred_age <- marginaleffects::predictions(turn_m_3,
+turn_m_2_pred_age <- marginaleffects::predictions(turn_m_2,
     type = "response",
     re_formula = NULL,
     ndraws = 1000,
     newdata = marginaleffects::datagrid(
         mean_age = seq(
-            min(turn_m_3$data$mean_age),
-            max(turn_m_3$data$mean_age),
+            min(turn_m_2$data$mean_age),
+            max(turn_m_2$data$mean_age),
             by = 0.1
         )
     )
@@ -165,27 +165,27 @@ turn_m_3_pred_age <- marginaleffects::predictions(turn_m_3,
     marginaleffects::posterior_draws()
 
 # convert estimates back to the original scale
-turn_m_3_gr_age_2 <- og_scale(turn_data, turn_m_3_gr_age_2, v = "mean_age")
-turn_m_3_pred_age <- og_scale(turn_data, turn_m_3_pred_age, v = "mean_age")
+turn_m_2_gr_age_2 <- og_scale(turn_data, turn_m_2_gr_age_2, v = "mean_age")
+turn_m_2_pred_age <- og_scale(turn_data, turn_m_2_pred_age, v = "mean_age")
 
 
-# Effect of individual turnover on cultural turnover (turn_m_3)
+# Effect of individual turnover on cultural turnover (turn_m_2)
 
-turn_m_3_gr <- marginaleffects::datagrid(
-    model = turn_m_3,
-    prop_same_birds = turn_m_3$data$prop_same_birds
+turn_m_2_gr <- marginaleffects::datagrid(
+    model = turn_m_2,
+    prop_same_birds = turn_m_2$data$prop_same_birds
 )
 
-turn_m_3_gr_2 <- partial_residuals(turn_m_3, turn_m_3_gr)
+turn_m_2_gr_2 <- partial_residuals(turn_m_2, turn_m_2_gr)
 
-turn_m_3_pred <- marginaleffects::predictions(turn_m_3,
+turn_m_2_pred <- marginaleffects::predictions(turn_m_2,
     type = "response",
     re_formula = NULL,
     ndraws = 1000,
     newdata = marginaleffects::datagrid(
         prop_same_birds = seq(
-            min(turn_m_3$data$prop_same_birds),
-            max(turn_m_3$data$prop_same_birds),
+            min(turn_m_2$data$prop_same_birds),
+            max(turn_m_2$data$prop_same_birds),
             by = 0.1
         )
     )
@@ -193,8 +193,8 @@ turn_m_3_pred <- marginaleffects::predictions(turn_m_3,
     marginaleffects::posterior_draws()
 
 # convert estimates back to the original scale
-turn_m_3_gr_2 <- og_scale(turn_data, turn_m_3_gr_2, v = "prop_same_birds")
-turn_m_3_pred <- og_scale(turn_data, turn_m_3_pred, v = "prop_same_birds")
+turn_m_2_gr_2 <- og_scale(turn_data, turn_m_2_gr_2, v = "prop_same_birds")
+turn_m_2_pred <- og_scale(turn_data, turn_m_2_pred, v = "prop_same_birds")
 
 
 
@@ -209,7 +209,7 @@ fill_colors <- c(
     "prop_same_birds" = persian[1]
 )
 
-turn_m_3_margeffs_plot <- turn_m_3_margeffs |>
+turn_m_2_margeffs_plot <- turn_m_2_margeffs |>
     ggplot(aes(x = draw, y = term, fill = term, color = term)) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "#858585") +
     ggdist::stat_halfeye() +
@@ -259,7 +259,7 @@ turn_m_3_margeffs_plot <- turn_m_3_margeffs |>
 
 cft_colors <- c("#da873b", "#367480")
 
-turn_m_3_cft_plot <- turn_m_3_cft |>
+turn_m_2_cft_plot <- turn_m_2_cft |>
     ggplot(aes(
         x = draw,
         fill = condition,
@@ -314,11 +314,11 @@ turn_m_3_cft_plot <- turn_m_3_cft |>
 # 4 plots: effect of each variable on cultural turnover
 
 # Dispersal
-turn_m_3_dis_plot <-
-    turn_m_3_pred_dis |>
+turn_m_2_dis_plot <-
+    turn_m_2_pred_dis |>
     ggplot(aes(x = mean_dispersal_distance, y = 1 - draw)) +
     geom_point(
-        data = turn_m_3_gr_dis_2,
+        data = turn_m_2_gr_dis_2,
         aes(
             y = 1 - estimate_with_error
         ),
@@ -355,11 +355,11 @@ turn_m_3_dis_plot <-
 # Immigration
 
 
-turn_m_3_imm_plot <-
-    turn_m_3_pred_imm |>
+turn_m_2_imm_plot <-
+    turn_m_2_pred_imm |>
     ggplot(aes(x = prop_immigrant, y = 1 - draw)) +
     geom_point(
-        data = turn_m_3_gr_imm_2,
+        data = turn_m_2_gr_imm_2,
         aes(
             y = 1 - estimate_with_error
         ),
@@ -394,11 +394,11 @@ turn_m_3_imm_plot <-
 
 # Age
 
-turn_m_3_age_plot <-
-    turn_m_3_pred_age |>
+turn_m_2_age_plot <-
+    turn_m_2_pred_age |>
     ggplot(aes(x = mean_age, y = 1 - draw)) +
     geom_point(
-        data = turn_m_3_gr_age_2,
+        data = turn_m_2_gr_age_2,
         aes(
             y = 1 - estimate_with_error
         ),
@@ -435,11 +435,11 @@ turn_m_3_age_plot <-
 
 # Turnover
 
-turn_m_3_turn_plot <-
-    turn_m_3_pred |>
+turn_m_2_turn_plot <-
+    turn_m_2_pred |>
     ggplot(aes(x = 1 - prop_same_birds, y = 1 - draw)) +
     geom_point(
-        data = turn_m_3_gr_2,
+        data = turn_m_2_gr_2,
         aes(
             y = 1 - estimate_with_error
         ),
@@ -496,18 +496,18 @@ pop_contour <- terra::vect(
 pop_contour_sf <- pop_contour |> sf::st_as_sf()
 
 
-turn_m_3_spp <- get_spatial_preds(turn_m_3, turn_m_3$data, resolution, ndraws)
-turn_m_3_spp <- turn_m_3_spp |>
+turn_m_2_spp <- get_spatial_preds(turn_m_2, turn_m_2$data, resolution, ndraws)
+turn_m_2_spp <- turn_m_2_spp |>
     dplyr::group_by(x, y) |>
     dplyr::summarise(
         estimate = mean(estimate),
         se = mean(se)
     )
 
-turn_m_3_rast <- get_raster(turn_m_3_spp, pop_contour, NULL, type, resolution,
+turn_m_2_rast <- get_raster(turn_m_2_spp, pop_contour, NULL, type, resolution,
     fact = 4
 ) |> dplyr::mutate(estimate = 1 - estimate)
-crange <- turn_m_3_rast |>
+crange <- turn_m_2_rast |>
     dplyr::select(!!type) |>
     range()
 lims <- seq(crange[1] + 0.02, crange[2] - 0.02, length.out = 3)
@@ -515,8 +515,8 @@ limlabs <- lims |> round(2)
 
 
 
-turn_m_3_spat <- ggplot() +
-    geom_raster(data = turn_m_3_rast, aes(x = x, y = y, fill = !!sym(type))) +
+turn_m_2_spat <- ggplot() +
+    geom_raster(data = turn_m_2_rast, aes(x = x, y = y, fill = !!sym(type))) +
     geom_sf(
         data = pop_contour_sf, fill = NA, linewidth = .3, colour = pal_centre
     ) +
@@ -539,7 +539,7 @@ turn_m_3_spat <- ggplot() +
     # set x scale limits
     scale_x_continuous(
         expand = c(0, 0),
-        limits = c(min(turn_m_3_rast$x) - 200, max(turn_m_3_rast$x) + 800),
+        limits = c(min(turn_m_2_rast$x) - 200, max(turn_m_2_rast$x) + 800),
     ) +
     titheme() +
     theme(
@@ -557,11 +557,11 @@ turn_m_3_spat <- ggplot() +
         legend.spacing.y = unit(.2, "cm")
     )
 
-turnover_all <- (turn_m_3_margeffs_plot | turn_m_3_turn_plot |
-    (turn_m_3_age_plot + theme(
+turnover_all <- (turn_m_2_margeffs_plot | turn_m_2_turn_plot |
+    (turn_m_2_age_plot + theme(
         axis.title.y = element_blank(),
         axis.text.y = element_blank(),
-    )) | (turn_m_3_spat / turn_m_3_cft_plot)) +
+    )) | (turn_m_2_spat / turn_m_2_cft_plot)) +
     plot_annotation(tag_levels = "A") &
     theme(plot.tag = element_text(size = 12, face = "bold"))
 

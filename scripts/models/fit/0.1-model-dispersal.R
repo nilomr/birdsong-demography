@@ -29,6 +29,10 @@ disp_m_1_data <- sharing_data |>
     dplyr::filter(!is.na(natal_distance), !is.na(dispersal_distance)) |>
     dplyr::filter(!is.na(father), !is.na(father2))
 
+# Save the data
+saveRDS(disp_m_1_data, file.path(config$path$fits, "disp_data.rds"))
+
+
 # Standardize the predictors
 disp_m_1_data_std <- disp_m_1_data |>
     dplyr::mutate(
@@ -42,7 +46,7 @@ disp_m_1_data_std <- disp_m_1_data |>
 
 
 disp_f_1 <- brms::bf(
-    mean_dist1 ~ 0 + natal_distance * nest_distance + year_born_diff +
+    mean_dist1 ~ 0 + natal_distance + nest_distance + year_born_diff +
         year + (1 | mm(father, father2))
 )
 
@@ -50,10 +54,11 @@ disp_m_1 <- brms::brm(
     disp_f_1,
     data = disp_m_1_data_std,
     family = gaussian(),
-    iter = 1000,
-    warmup = 500,
+    iter = 2000,
+    warmup = 1000,
     chains = 4,
     cores = 4,
+    seed = 42,
     threads = brms::threading(2),
     backend = "cmdstanr",
     file = file.path(config$path$fits, "disp_m_1"),
