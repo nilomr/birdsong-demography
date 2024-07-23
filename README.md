@@ -1,5 +1,6 @@
 
 ![Title Badge](https://img.shields.io/badge/Bird_Song_Culture_%26_Demography-k?style=for-the-badge&labelColor=d99c2b&color=d99c2b) ![R Badge](https://img.shields.io/badge/v4.2-4295B3?style=for-the-badge&logo=r&logoColor=white)
+<br>[![DOI](https://zenodo.org/badge/664785329.svg)](https://zenodo.org/doi/10.5281/zenodo.12800735)
 
 
 ![Study site](output/rmimg.jpg)
